@@ -11,7 +11,6 @@ interface PublicFormProps {
 
 export default function PublicForm({ template, onSubmit }: PublicFormProps) {
   const [submitted, setSubmitted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastSubmittedReq, setLastSubmittedReq] = useState<MeetingRequest | null>(null);
   const [copiedId, setCopiedId] = useState(false);
   
@@ -21,6 +20,11 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
 
   const [busySlots, setBusySlots] = useState<{start: string, end: string}[]>([]);
   const [businessSettings, setBusinessSettings] = useState<{businessStartHour: number, businessEndHour: number} | null>(null);
+
+  // Micro-interaction validation and morphing states
+  const [errorFields, setErrorFields] = useState<Record<string, string>>({});
+  const [shakingFields, setShakingFields] = useState<Record<string, boolean>>({});
+  const [submitState, setSubmitState] = useState<'idle' | 'loading' | 'success'>('idle');
 
   const dateFieldId = useMemo(() => {
     return template.fields.find(f => f.type === 'date')?.id || 'preferredDate';
@@ -53,7 +57,6 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
     if (!selectedDate) return [];
 
     const slots: string[] = [];
-    const dateObj = new Date(selectedDate);
     
     // Use dynamic settings or fallback to 9-17
     const startHour = businessSettings?.businessStartHour ?? 9;
@@ -63,7 +66,6 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
       for (let min of [0, 30]) {
         if (hour === endHour && min === 30) continue; // End exactly at endHour:00
 
-        
         const pad = (n: number) => String(n).padStart(2, '0');
         const timeString = `${pad(hour)}:${pad(min)}`; // Local time string
         
@@ -115,18 +117,61 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
     }
   };
 
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    const newShaking: Record<string, boolean> = {};
+    let isValid = true;
+
+    template.fields.forEach(field => {
+      const value = responses[field.id];
+      
+      // Required validation check
+      if (field.required && (!value || String(value).trim() === '')) {
+        newErrors[field.id] = `${field.label} is required.`;
+        newShaking[field.id] = true;
+        isValid = false;
+      }
+      
+      // Phone format validation check
+      if (field.type === 'phone' && value && String(value).trim() !== '') {
+        const phoneClean = String(value).replace(/\D/g, '');
+        if (phoneClean.length < 6) {
+          newErrors[field.id] = `Please enter a valid phone number.`;
+          newShaking[field.id] = true;
+          isValid = false;
+        }
+      }
+    });
+
+    setErrorFields(newErrors);
+    setShakingFields(newShaking);
+
+    // Reset shaking states after animation completes
+    if (!isValid) {
+      setTimeout(() => {
+        setShakingFields({});
+      }, 600);
+    }
+
+    return isValid;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (honeypot) {
       console.warn("Spam bot submission caught via honeypot.");
       setSubmitted(true);
-      setIsSubmitting(false);
       return;
     }
 
-    setIsSubmitting(true);
+    setErrorFields({});
+    if (!validateForm()) {
+      return;
+    }
+
+    setSubmitState('loading');
     
-    // Fake network request delay for premium feel
+    // Premium loading delay simulation
     setTimeout(() => {
       const generatedId = (typeof crypto !== 'undefined' && crypto.randomUUID) 
         ? crypto.randomUUID() 
@@ -144,9 +189,15 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
 
       onSubmit(newRequest);
       setLastSubmittedReq(newRequest);
-      setIsSubmitting(false);
-      setSubmitted(true);
-    }, 1200);
+      
+      setSubmitState('success');
+      
+      // Delay revealing the success screen to showcase checkmark morph
+      setTimeout(() => {
+        setSubmitted(true);
+        setSubmitState('idle');
+      }, 1000);
+    }, 1500);
   };
 
   const handleChange = (id: string, value: string) => {
@@ -156,35 +207,72 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
   const renderField = (field: FormField) => {
     const commonClasses = "w-full bg-slate-50/50 border border-slate-200 focus:bg-white text-slate-950 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-[#008FD5] focus:ring-4 focus:ring-[#008FD5]/10 hover:border-slate-300 transition-all placeholder-slate-400";
     
+    const isWide = field.id === 'fullName' || field.id === 'company' || field.id === 'purpose';
+    const hasError = !!errorFields[field.id];
+
+    // Helper wrapper component for Framer Motion micro-interactions (shake, hover lifts, error fades)
+    const inputWrapper = (children: React.ReactNode) => (
+      <motion.div
+        key={field.id}
+        className={`col-span-1 ${isWide ? 'md:col-span-2' : ''} flex flex-col`}
+        animate={shakingFields[field.id] ? { x: [-8, 8, -6, 6, -3, 3, 0] } : { x: 0 }}
+        transition={{ duration: 0.4, ease: "easeInOut" }}
+        whileHover={{ y: -1.5 }}
+      >
+        {children}
+        <AnimatePresence>
+          {hasError && (
+            <motion.span
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="text-[10px] text-red-500 font-semibold mt-1 pl-1"
+            >
+              {errorFields[field.id]}
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    );
+
+    const clearError = () => {
+      if (errorFields[field.id]) {
+        setErrorFields(prev => {
+          const fresh = { ...prev };
+          delete fresh[field.id];
+          return fresh;
+        });
+      }
+    };
+    
     switch (field.type) {
       case 'textarea':
-        return (
-          <div key={field.id} className="col-span-1 md:col-span-2">
+        return inputWrapper(
+          <>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
               {field.label} {field.required ? '' : <span className="opacity-60 font-normal">(Optional)</span>}
             </label>
             <textarea 
-              required={field.required} 
               rows={4} 
               placeholder={field.placeholder}
-              className={`${commonClasses} resize-y`} 
+              className={`${commonClasses} resize-y ${hasError ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10' : ''}`} 
               value={String(responses[field.id] || '')} 
-              onChange={e => handleChange(field.id, e.target.value)} 
+              onChange={e => { handleChange(field.id, e.target.value); clearError(); }} 
             />
-          </div>
+          </>
         );
       case 'dropdown':
-        return (
-          <div key={field.id} className="col-span-1">
+        return inputWrapper(
+          <>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
               {field.label} {field.required ? '' : <span className="opacity-60 font-normal">(Optional)</span>}
             </label>
             <div className="relative">
               <select 
-                required={field.required} 
-                className={`${commonClasses} appearance-none cursor-pointer pr-10`}
+                className={`${commonClasses} appearance-none cursor-pointer pr-10 ${hasError ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10' : ''}`}
                 value={String(responses[field.id] || '')} 
-                onChange={e => handleChange(field.id, e.target.value)}
+                onChange={e => { handleChange(field.id, e.target.value); clearError(); }}
               >
                 <option value="" disabled>Select an option</option>
                 {field.options?.map(opt => (
@@ -193,27 +281,26 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
               </select>
               <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
-          </div>
+          </>
         );
       case 'date':
-        return (
-          <div key={field.id} className="col-span-1">
+        return inputWrapper(
+          <>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
               {field.label} {field.required ? '' : <span className="opacity-60 font-normal">(Optional)</span>}
             </label>
             <input 
               type="date" 
-              required={field.required} 
-              className={commonClasses} 
+              className={`${commonClasses} ${hasError ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10' : ''}`} 
               value={String(responses[field.id] || '')} 
-              onChange={e => handleChange(field.id, e.target.value)} 
+              onChange={e => { handleChange(field.id, e.target.value); clearError(); }} 
             />
-          </div>
+          </>
         );
       case 'time':
         const selectedDate = responses[dateFieldId] as string;
-        return (
-          <div key={field.id} className="col-span-1">
+        return inputWrapper(
+          <>
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-xs font-semibold text-slate-700">
                 {field.label} {field.required ? '' : <span className="opacity-60 font-normal">(Optional)</span>}
@@ -232,10 +319,9 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
             ) : (
               <div className="relative">
                 <select 
-                  required={field.required} 
-                  className={`${commonClasses} appearance-none cursor-pointer pr-10`} 
+                  className={`${commonClasses} appearance-none cursor-pointer pr-10 ${hasError ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10' : ''}`} 
                   value={String(responses[field.id] || '')} 
-                  onChange={e => handleChange(field.id, e.target.value)} 
+                  onChange={e => { handleChange(field.id, e.target.value); clearError(); }} 
                 >
                   <option value="" disabled>Select a free time slot</option>
                   {availableTimeSlots.map(timeStr => (
@@ -245,26 +331,23 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
                 <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
             )}
-            
-          </div>
+          </>
         );
       default:
         // text, phone
-        const isWide = field.id === 'fullName' || field.id === 'company' || field.id === 'purpose';
-        return (
-          <div key={field.id} className={`col-span-1 ${isWide ? 'md:col-span-2' : ''}`}>
+        return inputWrapper(
+          <>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
               {field.label} {field.required ? '' : <span className="opacity-60 font-normal">(Optional)</span>}
             </label>
             <input 
-              required={field.required} 
               type={field.type === 'phone' ? 'tel' : 'text'} 
               placeholder={field.placeholder}
-              className={commonClasses} 
+              className={`${commonClasses} ${hasError ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10' : ''}`} 
               value={String(responses[field.id] || '')} 
-              onChange={e => handleChange(field.id, e.target.value)} 
+              onChange={e => { handleChange(field.id, e.target.value); clearError(); }} 
             />
-          </div>
+          </>
         );
     }
   };
@@ -274,18 +357,18 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
       {submitted && lastSubmittedReq ? (
         <motion.div 
            key="success"
-           initial={{ opacity: 0, scale: 0.97, y: 8 }}
+           initial={{ opacity: 0, scale: 0.97, y: 15 }}
            animate={{ opacity: 1, scale: 1, y: 0 }}
-           exit={{ opacity: 0, y: -8 }}
-           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+           exit={{ opacity: 0, y: -15 }}
+           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
            className="w-full max-w-[560px] flex justify-center relative z-10 mt-lg mb-xxl mx-auto text-left"
         >
-          {/* Elegantly ambient backdrop glows */}
+          {/* Ambient background glows */}
           <div className="absolute top-10 right-0 w-[400px] h-[400px] bg-[#008FD5]/5 rounded-full blur-[80px] -z-10 translate-x-1/4 -translate-y-1/4 pointer-events-none"></div>
           <div className="absolute bottom-10 left-0 w-[300px] h-[300px] bg-sky-200/5 rounded-full blur-[60px] -z-10 -translate-x-1/4 translate-y-1/4 pointer-events-none"></div>
 
           <div className="bg-white bg-texture border border-slate-200/80 rounded-3xl p-8 md:p-12 text-center w-full shadow-xl relative z-10 flex flex-col items-center">
-            {/* Top Badge / Seal */}
+            {/* Top Seal / Badge */}
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-emerald-50 mb-6 relative border border-emerald-100 shadow-sm">
                 <motion.div 
                   initial={{ scale: 0 }} 
@@ -301,23 +384,46 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
               {template.successMessage || 'Your executive request has been safely cataloged and is queued for verification.'}
             </p>
 
-            {/* Verified Receipt / Receipt Detail Card */}
+            {/* Verified Receipt Detail Card */}
             <div className="w-full bg-slate-50/80 border border-slate-200/50 rounded-xl p-4 md:p-5 mb-6 text-left space-y-3.5 relative font-sans">
               <div className="flex items-center justify-between border-b border-slate-200/50 pb-2.5">
                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Verification ID</span>
-                <div className="flex items-center gap-1.5 bg-white border border-slate-200/80 px-2 py-1 rounded text-[10px] text-[#0B1F33] font-mono shadow-2xs">
+                <div className="flex items-center gap-1.5 bg-white border border-slate-200/80 px-2.5 py-1 rounded-lg text-[10px] text-[#0B1F33] font-mono shadow-2xs">
                   <span>PEG-{lastSubmittedReq.id.slice(0, 8).toUpperCase()}</span>
-                  <button 
+                  
+                  <motion.button 
+                    whileTap={{ scale: 0.85 }}
                     onClick={() => handleCopyId(`PEG-${lastSubmittedReq.id.slice(0, 8).toUpperCase()}`)}
-                    className="text-slate-400 hover:text-[#008FD5] transition-colors focus:outline-none cursor-pointer"
+                    className="text-slate-400 hover:text-[#008FD5] transition-colors focus:outline-none cursor-pointer p-0.5"
                     title="Copy Reference ID"
                   >
-                    {copiedId ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
-                  </button>
+                    <AnimatePresence mode="wait">
+                      {copiedId ? (
+                        <motion.div
+                          key="copied"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          exit={{ scale: 0 }}
+                          transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                        >
+                          <Check size={11} className="text-emerald-500" />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="copy"
+                          initial={{ scale: 0.8 }}
+                          animate={{ scale: 1 }}
+                          exit={{ scale: 0.8 }}
+                        >
+                          <Copy size={11} />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.button>
                 </div>
               </div>
 
-              {/* Details Grid */}
+              {/* Grid Content */}
               <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
                 <div>
                   <span className="text-[10px] text-gray-400 font-medium block">Requester Name</span>
@@ -378,7 +484,7 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
               </div>
             </div>
 
-            {/* Submit another or back */}
+            {/* Back Actions */}
             <div className="w-full flex flex-col gap-2 font-sans">
               <button 
                 onClick={() => {
@@ -396,20 +502,11 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
       ) : (
         <motion.div 
           key="form"
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
+          exit={{ opacity: 0, y: -15 }}
           className="w-full max-w-[840px] bg-white bg-texture rounded-2xl shadow-ambient border border-slate-200/50 p-lg md:p-xxl mt-lg mb-xxl relative font-sans text-left"
         >
-          {isSubmitting && (
-            <div className="absolute inset-0 bg-white/70 backdrop-blur-xs z-20 rounded-2xl flex items-center justify-center">
-               <div className="bg-white p-lg rounded-xl shadow-lg border border-slate-200/60 flex flex-col items-center gap-3">
-                  <Loader2 className="animate-spin text-[#008FD5]" size={28} />
-                  <p className="text-xs font-bold text-[#0B1F33]">Securing Request...</p>
-               </div>
-            </div>
-          )}
-
           <div className="mb-xl text-center md:text-left border-b border-slate-100 pb-lg">
             <h1 className="font-sans text-xl md:text-2xl font-bold text-[#0B1F33] tracking-tight mb-2">{template.title}</h1>
             <p className="font-sans text-xs md:text-sm text-gray-500 max-w-2xl leading-relaxed">
@@ -418,7 +515,7 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
           </div>
 
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-lg gap-y-5">
-            {/* Honeypot Spam Bot Trap */}
+            {/* Honeypot Spam Trap */}
             <div className="hidden" aria-hidden="true">
               <input 
                 type="text" 
@@ -434,43 +531,66 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
 
             <div className="col-span-1 md:col-span-2 py-1 mt-2 border-t border-slate-100 pt-5">
               <label className="block text-xs font-semibold text-slate-700 mb-2">Request Priority</label>
-              <div className="flex flex-wrap gap-3 w-full sm:w-auto">
-                <button
+              <div className="flex flex-wrap gap-3 w-full sm:w-auto relative p-1 bg-slate-100/50 rounded-2xl border border-slate-200/40">
+                {/* Normal button */}
+                <motion.button
                   type="button"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setPriority('Normal')}
-                  className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium text-xs transition-all border cursor-pointer focus:outline-none ${
-                    priority === 'Normal'
-                      ? 'bg-slate-100 border-slate-300 text-slate-800 shadow-3xs font-semibold'
-                      : 'bg-white border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50'
-                  }`}
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-medium text-xs cursor-pointer focus:outline-none relative transition-colors duration-200 overflow-hidden"
+                  style={{ color: priority === 'Normal' ? '#0B1F33' : '#64748b', zIndex: 10 }}
                 >
-                  <span className={`w-1.5 h-1.5 rounded-full ${priority === 'Normal' ? 'bg-slate-500' : 'bg-slate-200'}`}></span>
+                  {priority === 'Normal' && (
+                    <motion.div
+                      layoutId="active-priority"
+                      className="absolute inset-0 bg-white border border-slate-300/60 shadow-sm rounded-xl -z-10"
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <span className={`w-1.5 h-1.5 rounded-full ${priority === 'Normal' ? 'bg-slate-500' : 'bg-slate-300'}`}></span>
                   Normal
-                </button>
-                <button
+                </motion.button>
+
+                {/* Important button */}
+                <motion.button
                   type="button"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setPriority('Important')}
-                  className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium text-xs transition-all border cursor-pointer focus:outline-none ${
-                    priority === 'Important'
-                      ? 'bg-amber-50 border-amber-200 text-amber-700 shadow-3xs font-semibold ring-2 ring-amber-500/5'
-                      : 'bg-white border-slate-200 text-slate-400 hover:text-amber-500 hover:bg-amber-50/20'
-                  }`}
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-medium text-xs cursor-pointer focus:outline-none relative transition-colors duration-200 overflow-hidden"
+                  style={{ color: priority === 'Important' ? '#d97706' : '#64748b', zIndex: 10 }}
                 >
-                  <span className={`w-1.5 h-1.5 rounded-full ${priority === 'Important' ? 'bg-amber-500' : 'bg-slate-200'}`}></span>
+                  {priority === 'Important' && (
+                    <motion.div
+                      layoutId="active-priority"
+                      className="absolute inset-0 bg-amber-50 border border-amber-200 shadow-sm rounded-xl -z-10"
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <span className={`w-1.5 h-1.5 rounded-full ${priority === 'Important' ? 'bg-amber-500' : 'bg-slate-300'}`}></span>
                   Important
-                </button>
-                <button
+                </motion.button>
+
+                {/* Urgent button */}
+                <motion.button
                   type="button"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setPriority('Urgent')}
-                  className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium text-xs transition-all border cursor-pointer focus:outline-none ${
-                    priority === 'Urgent'
-                      ? 'bg-rose-50 border-rose-200 text-rose-700 shadow-3xs font-semibold ring-2 ring-rose-500/5'
-                      : 'bg-white border-slate-200 text-slate-400 hover:text-rose-500 hover:bg-rose-50/20'
-                  }`}
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-medium text-xs cursor-pointer focus:outline-none relative transition-colors duration-200 overflow-hidden"
+                  style={{ color: priority === 'Urgent' ? '#e11d48' : '#64748b', zIndex: 10 }}
                 >
-                  <span className={`w-1.5 h-1.5 rounded-full ${priority === 'Urgent' ? 'bg-rose-500 animate-pulse' : 'bg-slate-200'}`}></span>
+                  {priority === 'Urgent' && (
+                    <motion.div
+                      layoutId="active-priority"
+                      className="absolute inset-0 bg-rose-50 border border-rose-200 shadow-sm rounded-xl -z-10"
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <span className={`w-1.5 h-1.5 rounded-full ${priority === 'Urgent' ? 'bg-rose-500 animate-pulse' : 'bg-slate-300'}`}></span>
                   Urgent
-                </button>
+                </motion.button>
               </div>
             </div>
 
@@ -478,14 +598,58 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
               <span className="text-[10px] md:text-xs text-slate-400 font-medium flex items-center gap-1.5">
                 <ShieldCheck size={13} className="text-[#008FD5]" /> All submissions are reviewed confidentially by our coordination office.
               </span>
-              <button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="w-full sm:w-auto bg-[#008FD5] text-white font-label-md text-xs px-8 py-3.5 rounded-xl hover:bg-[#008FD5]/90 transition-all hover:shadow-md active:scale-97 flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none cursor-pointer focus:outline-none"
-              >
-                  {isSubmitting ? 'Securing Request...' : 'Submit Meeting Proposal'}
-                  {!isSubmitting && <Send size={14} />}
-              </button>
+              
+              <div className="flex items-center justify-end w-full sm:w-auto h-[48px]">
+                <motion.button 
+                  type="submit" 
+                  disabled={submitState !== 'idle'}
+                  layout
+                  animate={{
+                    width: submitState === 'idle' ? 'auto' : '48px',
+                    borderRadius: submitState === 'idle' ? '12px' : '9999px',
+                    backgroundColor: submitState === 'success' ? '#10b981' : '#008FD5',
+                  }}
+                  transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                  className="text-white font-label-md text-xs px-8 py-3.5 flex items-center justify-center gap-2 cursor-pointer focus:outline-none shrink-0 min-w-[48px] h-[48px]"
+                  style={{ overflow: 'hidden' }}
+                >
+                  <AnimatePresence mode="wait">
+                    {submitState === 'idle' && (
+                      <motion.div 
+                        key="idle"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="flex items-center gap-2 whitespace-nowrap"
+                      >
+                        <span>Submit Meeting Proposal</span>
+                        <Send size={14} />
+                      </motion.div>
+                    )}
+                    {submitState === 'loading' && (
+                      <motion.div 
+                        key="loading"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        className="flex items-center justify-center shrink-0"
+                      >
+                        <Loader2 className="animate-spin text-white" size={18} />
+                      </motion.div>
+                    )}
+                    {submitState === 'success' && (
+                      <motion.div 
+                        key="success"
+                        initial={{ opacity: 0, scale: 0.5, rotate: -45 }}
+                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                        className="flex items-center justify-center shrink-0"
+                      >
+                        <Check size={20} className="stroke-[3px] text-white" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.button>
+              </div>
             </div>
           </form>
         </motion.div>
