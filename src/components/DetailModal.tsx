@@ -122,10 +122,12 @@ export default function DetailModal({ request, onClose, onUpdateStatus, onDelete
                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Category</p>
                      <p className="text-xs md:text-sm text-[#0B1F33] font-semibold">{String(request.responses?.category || '')}</p>
                   </div>
-                  <div className="col-span-2 md:col-span-1">
-                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Contact Source</p>
-                     <p className="text-xs md:text-sm text-[#0B1F33] font-semibold">{String(request.responses?.source || '')}</p>
-                  </div>
+                  {request.responses?.source && (
+                    <div className="col-span-2 md:col-span-1">
+                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Contact Source</p>
+                       <p className="text-xs md:text-sm text-[#0B1F33] font-semibold">{String(request.responses.source)}</p>
+                    </div>
+                  )}
                   <div className="col-span-2 md:col-span-1 mt-2">
                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Proposed Date</p>
                      <p className="text-xs md:text-sm text-[#0B1F33] font-semibold flex items-center gap-1.5">

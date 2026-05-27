@@ -167,14 +167,20 @@ export async function syncToGoogleCalendar(
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
   // Build high-ROI meeting description
-  const description = [
+  const descriptionLines = [
     `Precision Engineering Group — Executive Meeting`,
     `-----------------------------------------------`,
     `Requester: ${String(request.responses?.fullName || '')}`,
     `Company: ${String(request.responses?.company || '') || 'Individual Request'}`,
-    `Phone: ${String(request.responses?.phoneNumber || '')}`,
-    `Meeting Category: ${String(request.responses?.category || '')}`,
-    `Contact Source: ${String(request.responses?.source || '')}`,
+    `Phone: ${String(request.responses?.phoneNumber || '') || 'Not Provided'}`,
+    `Meeting Category: ${String(request.responses?.category || '')}`
+  ];
+
+  if (request.responses?.source) {
+    descriptionLines.push(`Contact Source: ${String(request.responses.source)}`);
+  }
+
+  descriptionLines.push(
     ``,
     `Purpose of Meeting:`,
     `${String(request.responses?.purpose || '')}`,
@@ -185,7 +191,9 @@ export async function syncToGoogleCalendar(
     `-----------------------------------------------`,
     `Verified Request ID: ${request.id}`,
     `This event was synthesized and synced via PRECI FORM Admin Dashboard.`
-  ].join('\n');
+  );
+
+  const description = descriptionLines.join('\n');
 
   // Request Body
   const eventBody = {

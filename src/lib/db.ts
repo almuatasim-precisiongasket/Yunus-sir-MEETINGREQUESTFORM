@@ -25,19 +25,18 @@ export const db = getFirestore(app);
 
 const defaultForm: FormTemplate = {
   id: "form-default",
-  title: "Executive Meeting Gateway",
-  description: "Submit your consultation or executive alignment proposal. Our office screens, categorizes, and logs incoming schedules securely.",
+  title: "Meeting Request Form",
+  description: "Welcome to PRECI FORM. Submit your consultation or executive meeting request for secure review and scheduling coordination",
   successMessage: "Your executive request has been safely cataloged and is queued for verification.",
   createdAt: Date.now(),
   fields: [
-    { id: "fullName", label: "Full Name", type: "text", required: true, isSystem: true },
+    { id: "fullName", label: "Name", type: "text", required: true, isSystem: true },
     { id: "company", label: "Company / Organization", type: "text", required: false, isSystem: true },
-    { id: "category", label: "Meeting Category", type: "dropdown", required: true, isSystem: false, options: ["Business", "Legal", "Investment", "Personal", "General"] },
-    { id: "phoneNumber", label: "Phone Number", type: "phone", required: true, isSystem: false },
+    { id: "category", label: "Meeting Category", type: "dropdown", required: true, isSystem: false, options: ["Business", "Legal", "Investment", "Personal", "General", "Other"] },
+    { id: "phoneNumber", label: "Phone Number", type: "phone", required: false, isSystem: false },
     { id: "preferredDate", label: "Preferred Meeting Date", type: "date", required: true, isSystem: true },
     { id: "preferredTime", label: "Preferred Meeting Time", type: "time", required: true, isSystem: true },
     { id: "expectedDuration", label: "Expected Duration", type: "dropdown", required: true, isSystem: true, options: ["15 minutes", "30 minutes", "45 minutes", "1 hour", "1.5 hours", "2+ hours"] },
-    { id: "source", label: "How did you get the contact?", type: "text", required: true, isSystem: false },
     { id: "purpose", label: "Purpose of Meeting", type: "textarea", required: true, isSystem: true },
     { id: "context", label: "Detailed Notes / Context", type: "textarea", required: false, isSystem: false }
   ]
