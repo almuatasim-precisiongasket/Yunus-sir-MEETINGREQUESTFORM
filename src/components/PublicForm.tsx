@@ -11,6 +11,7 @@ interface CustomDatePickerProps {
 }
 
 function CustomDatePicker({ value, onChange, hasError }: CustomDatePickerProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState(() => {
     if (value) {
       try {
@@ -45,6 +46,7 @@ function CustomDatePicker({ value, onChange, hasError }: CustomDatePickerProps) 
     const pad = (n: number) => String(n).padStart(2, '0');
     const dateStr = `${year}-${pad(month + 1)}-${pad(day)}`;
     onChange(dateStr);
+    setIsOpen(false); // Close dropdown on selection
   };
 
   const today = new Date();
@@ -63,75 +65,123 @@ function CustomDatePicker({ value, onChange, hasError }: CustomDatePickerProps) 
 
   const weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
+  const displayValue = () => {
+    if (!value) return "Select preferred date...";
+    try {
+      const d = new Date(value + 'T00:00:00');
+      return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    } catch (e) {
+      return value;
+    }
+  };
+
   return (
-    <div className={`bg-white border rounded-2xl p-4 shadow-sm w-full font-sans transition-all duration-200 ${hasError ? 'border-red-400 ring-4 ring-red-400/10' : 'border-slate-200/80 hover:border-slate-300'}`}>
-      {/* Month Navigation */}
-      <div className="flex items-center justify-between mb-4 border-b border-slate-50 pb-2">
-        <h4 className="text-xs font-black text-slate-800 tracking-tight">{monthNames[month]} {year}</h4>
-        <div className="flex gap-1.5">
-          <motion.button 
-            type="button" 
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handlePrevMonth}
-            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors cursor-pointer flex items-center justify-center border border-slate-100"
-          >
-            <ChevronLeft size={13} className="stroke-[2.5px]" />
-          </motion.button>
-          <motion.button 
-            type="button" 
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleNextMonth}
-            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors cursor-pointer flex items-center justify-center border border-slate-100"
-          >
-            <ChevronRight size={13} className="stroke-[2.5px]" />
-          </motion.button>
+    <div className="w-full relative flex flex-col">
+      {/* Clickable Trigger Input */}
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full bg-slate-50/50 border text-slate-950 rounded-xl px-4 py-3 text-xs flex items-center justify-between cursor-pointer transition-all ${
+          isOpen 
+            ? 'bg-white border-[#008FD5] ring-4 ring-[#008FD5]/10' 
+            : hasError 
+            ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10' 
+            : 'border-slate-200 hover:border-slate-300'
+        }`}
+      >
+        <div className="flex items-center gap-2">
+          <Calendar size={14} className={value ? 'text-[#008FD5]' : 'text-slate-400'} />
+          <span className={value ? 'font-bold text-slate-900' : 'text-slate-400 font-semibold'}>
+            {displayValue()}
+          </span>
         </div>
+        <motion.div
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChevronDown size={14} className="text-slate-400" />
+        </motion.div>
       </div>
 
-      {/* Weekdays Headers */}
-      <div className="grid grid-cols-7 gap-1 text-center mb-2 font-sans">
-        {weekdays.map(d => (
-          <span key={d} className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{d}</span>
-        ))}
-      </div>
-
-      {/* Days Grid */}
-      <div className="grid grid-cols-7 gap-1 text-center font-sans">
-        {/* Empty cells for leading offset */}
-        {Array.from({ length: firstDayIndex }).map((_, idx) => (
-          <span key={`empty-${idx}`} className="h-7 w-7 flex items-center justify-center"></span>
-        ))}
-
-        {/* Real Day cells */}
-        {days.map(({ day, isPast, isSelected, isToday }) => (
-          <button
-            key={day}
-            type="button"
-            disabled={isPast}
-            onClick={() => handleSelectDay(day)}
-            className={`h-7 w-7 rounded-lg text-xs font-bold flex items-center justify-center relative cursor-pointer transition-all duration-150 select-none ${
-              isPast 
-                ? 'text-slate-200 cursor-not-allowed font-medium' 
-                : isSelected 
-                ? 'text-white' 
-                : isToday 
-                ? 'text-[#008FD5] bg-sky-50/70 border border-sky-100/50' 
-                : 'text-slate-700 hover:bg-slate-50 hover:text-[#008FD5]'
-            }`}
+      {/* Dropdown Calendar Grid */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, marginTop: 0 }}
+            animate={{ opacity: 1, height: 'auto', marginTop: 8 }}
+            exit={{ opacity: 0, height: 0, marginTop: 0 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xl w-full font-sans z-30"
           >
-            {isSelected && (
-              <motion.div 
-                layoutId="active-date-pill"
-                className="absolute inset-0 bg-[#008FD5] rounded-lg -z-10 shadow-sm shadow-blue-500/20"
-                transition={{ type: "spring", stiffness: 380, damping: 28 }}
-              />
-            )}
-            <span>{day}</span>
-          </button>
-        ))}
-      </div>
+            {/* Month Navigation */}
+            <div className="flex items-center justify-between mb-4 border-b border-slate-50 pb-2">
+              <h4 className="text-xs font-black text-slate-800 tracking-tight">{monthNames[month]} {year}</h4>
+              <div className="flex gap-1.5">
+                <motion.button 
+                  type="button" 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handlePrevMonth}
+                  className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors cursor-pointer flex items-center justify-center border border-slate-100"
+                >
+                  <ChevronLeft size={13} className="stroke-[2.5px]" />
+                </motion.button>
+                <motion.button 
+                  type="button" 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleNextMonth}
+                  className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors cursor-pointer flex items-center justify-center border border-slate-100"
+                >
+                  <ChevronRight size={13} className="stroke-[2.5px]" />
+                </motion.button>
+              </div>
+            </div>
+
+            {/* Weekdays Headers */}
+            <div className="grid grid-cols-7 gap-1 text-center mb-2 font-sans">
+              {weekdays.map(d => (
+                <span key={d} className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{d}</span>
+              ))}
+            </div>
+
+            {/* Days Grid */}
+            <div className="grid grid-cols-7 gap-1 text-center font-sans">
+              {/* Empty cells for leading offset */}
+              {Array.from({ length: firstDayIndex }).map((_, idx) => (
+                <span key={`empty-${idx}`} className="h-7 w-7 flex items-center justify-center"></span>
+              ))}
+
+              {/* Real Day cells */}
+              {days.map(({ day, isPast, isSelected, isToday }) => (
+                <button
+                  key={day}
+                  type="button"
+                  disabled={isPast}
+                  onClick={() => handleSelectDay(day)}
+                  className={`h-7 w-7 rounded-lg text-xs font-bold flex items-center justify-center relative cursor-pointer transition-all duration-150 select-none ${
+                    isPast 
+                      ? 'text-slate-200 cursor-not-allowed font-medium' 
+                      : isSelected 
+                      ? 'text-white' 
+                      : isToday 
+                      ? 'text-[#008FD5] bg-sky-50/70 border border-sky-100/50' 
+                      : 'text-slate-700 hover:bg-slate-50 hover:text-[#008FD5]'
+                  }`}
+                >
+                  {isSelected && (
+                    <motion.div 
+                      layoutId="active-date-pill"
+                      className="absolute inset-0 bg-[#008FD5] rounded-lg -z-10 shadow-sm shadow-blue-500/20"
+                      transition={{ type: "spring", stiffness: 380, damping: 28 }}
+                    />
+                  )}
+                  <span>{day}</span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
