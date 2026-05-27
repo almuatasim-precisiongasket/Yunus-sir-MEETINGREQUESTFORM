@@ -314,3 +314,36 @@ export function subscribeRequests(
   }
 }
 
+export interface GoogleCredentials {
+  clientId: string;
+  clientSecret: string;
+  refreshToken?: string;
+  accessToken?: string;
+  tokenExpiry?: number;
+}
+
+export async function getGoogleCredentials(): Promise<GoogleCredentials | null> {
+  try {
+    const docRef = doc(db, 'settings', 'google_auth');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data() as GoogleCredentials;
+    }
+  } catch (err) {
+    console.warn('Firestore getGoogleCredentials error, using local fallback:', err);
+  }
+  return getLocal<GoogleCredentials | null>('google_credentials', null);
+}
+
+export async function saveGoogleCredentials(creds: GoogleCredentials): Promise<void> {
+  setLocal('google_credentials', creds);
+  try {
+    const docRef = doc(db, 'settings', 'google_auth');
+    await setDoc(docRef, creds);
+  } catch (err) {
+    console.error('Firestore saveGoogleCredentials error:', err);
+    throw err;
+  }
+}
+
+

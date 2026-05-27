@@ -19,6 +19,7 @@ import { initAuth, googleSignIn, googleLogout } from './lib/googleAuth';
 import { syncFreeBusyToCache } from './lib/googleCalendar';
 import { User } from 'firebase/auth';
 import { getForms, getRequests, addRequest as dbAddRequest, updateRequestStatus, seedRequests, deleteRequest, subscribeRequests } from './lib/db';
+import { getOrRefreshGoogleToken } from './lib/googleOAuthRefresh';
 
 export default function App() {
   // Check if URL is for public request intake
@@ -51,23 +52,40 @@ export default function App() {
 
   // Initialize status listener
   useEffect(() => {
-    const unsubscribe = initAuth(
-      (user, token) => {
-        setGoogleUser(user);
+    // 1. Check if permanent background connection exists first
+    getOrRefreshGoogleToken().then((token) => {
+      if (token) {
         setGoogleToken(token);
         setIsGoogleLoading(false);
-        // Sync availability to cache immediately on load if token is fresh
         syncFreeBusyToCache(token);
-      },
-      () => {
-        setGoogleUser(null);
-        setGoogleToken(null);
-        setIsGoogleLoading(false);
+      } else {
+        // 2. Fall back to standard session popup listener
+        const unsubscribe = initAuth(
+          (user, token) => {
+            setGoogleUser(user);
+            setGoogleToken(token);
+            setIsGoogleLoading(false);
+            syncFreeBusyToCache(token);
+          },
+          () => {
+            setGoogleUser(null);
+            setGoogleToken(null);
+            setIsGoogleLoading(false);
+          }
+        );
+        return () => {
+          if (unsubscribe) unsubscribe();
+        };
       }
-    );
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
+    });
+  }, []);
+
+  // Check for permanent link redirect parameter on boot
+  useEffect(() => {
+    if (window.location.search.includes('settings=true')) {
+      setView('settings');
+      setIsLoggedIn(true);
+    }
   }, []);
 
   useEffect(() => {
