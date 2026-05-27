@@ -59,6 +59,15 @@ export default function App() {
         setIsGoogleLoading(false);
         syncFreeBusyToCache(token);
       } else {
+        // Check if a permanent connection was configured but failed to refresh
+        import('./lib/db').then(({ getGoogleCredentials }) => {
+          getGoogleCredentials().then((creds) => {
+            if (creds && creds.refreshToken) {
+              showToast("Permanent Google Calendar connection has expired or been revoked. Please re-authorize in Settings.", "warning");
+            }
+          });
+        });
+
         // 2. Fall back to standard session popup listener
         const unsubscribe = initAuth(
           (user, token) => {
@@ -770,7 +779,16 @@ export default function App() {
               ) : view === 'dispatch' ? (
                 <WhatsAppDispatch />
               ) : view === 'settings' ? (
-                <SettingsView />
+                <SettingsView 
+                  onLinkSuccess={(token) => {
+                    setGoogleToken(token);
+                    syncFreeBusyToCache(token);
+                    showToast("Dashboard synchronized with permanent Google token in real-time!", "success");
+                  }}
+                  onUnlink={() => {
+                    setGoogleToken(null);
+                  }}
+                />
               ) : null}
             </motion.div>
           </AnimatePresence>

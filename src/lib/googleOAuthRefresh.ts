@@ -89,9 +89,7 @@ export async function exchangeCodeForRefreshToken(
         client_secret: clientSecret,
         code: code,
         redirect_uri: redirectUri,
-        grant_type: 'authorization_code',
-        access_type: 'offline',
-        prompt: 'consent'
+        grant_type: 'authorization_code'
       })
     });
 

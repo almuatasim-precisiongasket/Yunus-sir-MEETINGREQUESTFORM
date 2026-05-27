@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Loader2, AlertCircle, Clock, ShieldCheck, Key, RefreshCw, Unlink, Plus, Trash2, Mail, MessageSquare, CalendarX2 } from 'lucide-react';
+import { Save, Loader2, AlertCircle, Clock, ShieldCheck, Key, RefreshCw, Unlink, Plus, Trash2, Mail, MessageSquare, CalendarX2, Check, Copy } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getSettings, saveSettings, getGoogleCredentials, saveGoogleCredentials, BlackoutDate, SettingsData } from '../lib/db';
-import { exchangeCodeForRefreshToken } from '../lib/googleOAuthRefresh';
+import { exchangeCodeForRefreshToken, getOrRefreshGoogleToken } from '../lib/googleOAuthRefresh';
 
-export default function Settings() {
+interface SettingsProps {
+  onLinkSuccess?: (token: string) => void;
+  onUnlink?: () => void;
+}
+
+export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -20,6 +25,10 @@ export default function Settings() {
   const [isLinking, setIsLinking] = useState(false);
   const [linkStatus, setLinkStatus] = useState<'idle' | 'success' | 'error' | 'exchanging'>('idle');
 
+  // Live link validation state
+  const [connectionStatus, setConnectionStatus] = useState<'unlinked' | 'validating' | 'linked_valid' | 'linked_expired'>('unlinked');
+  const [copiedRedirectUri, setCopiedRedirectUri] = useState(false);
+
   useEffect(() => {
     // 1. Fetch settings (business hours + blackout dates + admin notifications)
     getSettings()
@@ -28,17 +37,28 @@ export default function Settings() {
 
     // 2. Fetch Google credentials state
     getGoogleCredentials()
-      .then(creds => {
+      .then(async (creds) => {
         if (creds) {
           setClientId(creds.clientId || '');
           setClientSecret(creds.clientSecret || '');
           if (creds.refreshToken) {
             setIsLinked(true);
+            setConnectionStatus('validating');
+            // Validate the background connection instantly
+            const activeToken = await getOrRefreshGoogleToken();
+            if (activeToken) {
+              setConnectionStatus('linked_valid');
+            } else {
+              setConnectionStatus('linked_expired');
+            }
+          } else {
+            setConnectionStatus('unlinked');
           }
         }
       })
       .catch(console.error);
   }, []);
+
 
   // Handle OAuth Code Redirect Exchange
   useEffect(() => {
@@ -56,7 +76,7 @@ export default function Settings() {
           }
 
           const redirectUri = window.location.origin + '/?settings=true';
-          await exchangeCodeForRefreshToken(
+          const creds = await exchangeCodeForRefreshToken(
             savedCreds.clientId,
             savedCreds.clientSecret,
             code,
@@ -65,11 +85,16 @@ export default function Settings() {
 
           setIsLinked(true);
           setLinkStatus('success');
+          setConnectionStatus('linked_valid');
+          if (creds && creds.accessToken && onLinkSuccess) {
+            onLinkSuccess(creds.accessToken);
+          }
           // Clear query params immediately for security
           window.history.replaceState({}, document.title, window.location.origin + '/?settings=true');
         } catch (err) {
           console.error('Failed to exchange code:', err);
           setLinkStatus('error');
+          setConnectionStatus('linked_expired');
         }
       };
 
@@ -180,9 +205,13 @@ export default function Settings() {
       setClientSecret('');
       setIsLinked(false);
       setLinkStatus('idle');
+      setConnectionStatus('unlinked');
       // Remove local storage tokens
       localStorage.removeItem('google_auth_token');
       localStorage.removeItem('google_auth_token_expiry');
+      if (onUnlink) {
+        onUnlink();
+      }
       alert('Google Account unlinked successfully.');
     } catch (err) {
       console.error(err);
@@ -462,7 +491,7 @@ export default function Settings() {
         </div>
       </form>
 
-      {/* CARD 2: Permanent Google Connection */}
+      {/* CARD 4: Permanent Google Connection */}
       <div className="bg-white rounded-xl shadow-sm border border-[#E5E7EB] overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -470,13 +499,24 @@ export default function Settings() {
             <h2 className="font-bold text-[#0B1F33]">Permanent Google API Sync</h2>
           </div>
           <div>
-            {isLinked ? (
+            {connectionStatus === 'unlinked' && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-100 animate-pulse">
+                <AlertCircle size={14} /> Ephemeral (Popups Required)
+              </span>
+            )}
+            {connectionStatus === 'validating' && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-100 animate-pulse">
+                <RefreshCw size={14} className="animate-spin" /> Verifying Sync Health...
+              </span>
+            )}
+            {connectionStatus === 'linked_valid' && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
                 <ShieldCheck size={14} /> Connected Always
               </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-100 animate-pulse">
-                <AlertCircle size={14} /> Ephemeral (Popups Required)
+            )}
+            {connectionStatus === 'linked_expired' && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-100 animate-bounce">
+                <AlertCircle size={14} /> Re-Authorization Required
               </span>
             )}
           </div>
@@ -487,6 +527,41 @@ export default function Settings() {
             Link your Google Workspace permanent credentials below to enable <strong>background calendar synchronization and auto-email replies</strong>. 
             Once authorized, Mr. Yunus will never be asked to click "Connect Calendar" or re-authenticate again.
           </p>
+
+          {/* Dynamic Redirect URI Copy Instruction helper box */}
+          <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl p-4.5 space-y-3.5">
+            <div className="flex items-start gap-2.5">
+              <div className="p-1.5 bg-[#008FD5]/10 rounded-lg text-[#008FD5] mt-0.5 animate-pulse">
+                <Key size={14} />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-xs font-bold text-[#0B1F33]">Google Console Configuration Helper</h4>
+                <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed font-medium">
+                  Before linking, ensure you have registered this exact redirect URI in your **Google Cloud Console &gt; OAuth 2.0 Credentials**:
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 bg-white border border-[#E5E7EB] rounded-xl p-2.5 pl-3.5 justify-between">
+              <code className="text-[10px] font-mono text-slate-700 break-all select-all font-black">
+                {window.location.origin}/?settings=true
+              </code>
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/?settings=true`);
+                  setCopiedRedirectUri(true);
+                  setTimeout(() => setCopiedRedirectUri(false), 2500);
+                }}
+                className="bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 border border-[#E5E7EB] px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all shrink-0"
+              >
+                {copiedRedirectUri ? <Check size={12} className="text-emerald-600 font-bold" /> : <Copy size={12} />}
+                <span>{copiedRedirectUri ? 'Copied' : 'Copy'}</span>
+              </motion.button>
+            </div>
+          </div>
 
           {linkStatus === 'exchanging' && (
             <div className="p-4 bg-blue-50 border border-blue-100 text-blue-800 rounded-xl flex items-center gap-3 text-xs font-semibold">
