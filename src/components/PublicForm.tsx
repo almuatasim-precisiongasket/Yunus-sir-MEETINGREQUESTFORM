@@ -404,10 +404,6 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
           )}
 
           <div className="mb-xl text-center md:text-left border-b border-slate-100 pb-lg">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200/60 text-slate-500 text-[10px] font-semibold mb-3 uppercase tracking-wide">
-              <Sparkles size={11} className="text-[#008FD5]" />
-              <span>Precision Operations Portal</span>
-            </div>
             <h1 className="font-sans text-xl md:text-2xl font-bold text-[#0B1F33] tracking-tight mb-2">{template.title}</h1>
             <p className="font-sans text-xs md:text-sm text-gray-500 max-w-2xl leading-relaxed">
               {template.description}
