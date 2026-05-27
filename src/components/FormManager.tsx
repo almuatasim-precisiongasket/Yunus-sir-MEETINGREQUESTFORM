@@ -251,7 +251,7 @@ function FormEditor({ form, onSave, onCancel }: { form: FormTemplate, onSave: (f
             />
           </div>
           <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Success Message Message</label>
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Success Message</label>
             <input 
               type="text" 
               className="w-full bg-[#F9FAFB] border border-[#F3F4F6] rounded-xl px-4 py-3 text-sm text-[#4B5563] focus:outline-none focus:border-[#008FD5] transition-all"

@@ -3,7 +3,7 @@ import { MeetingRequest, RequestStatus } from '../types';
 import { motion } from 'motion/react';
 import { X, Calendar, Clock, Building2, Phone, AlertTriangle, ChevronDown, Trash2, Video, ExternalLink, Loader2 } from 'lucide-react';
 import { findExistingCalendarEvent, syncToGoogleCalendar } from '../lib/googleCalendar';
-import { getForms } from '../lib/db';
+import { getForms, updateRequestLinks } from '../lib/db';
 
 interface DetailModalProps {
   request: MeetingRequest;
@@ -54,6 +54,10 @@ export default function DetailModal({ request, onClose, onUpdateStatus, onDelete
       const result = await syncToGoogleCalendar(googleToken, request);
       const event = await findExistingCalendarEvent(googleToken, request.id);
       setExistingEvent(event);
+      // Save calendar and meet links back to firestore/localStorage
+      if (result && (result.htmlLink || result.hangoutLink)) {
+        await updateRequestLinks(request.id, result.htmlLink || '', result.hangoutLink || '');
+      }
     } catch (err: any) {
       console.error(err);
       setSyncError(err.message || 'Failed to sync event to Google Calendar');

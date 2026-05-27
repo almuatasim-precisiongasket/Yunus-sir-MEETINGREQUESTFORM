@@ -235,9 +235,15 @@ export async function syncToGoogleCalendar(
 
   const createdEvent = await res.json();
   
+  // Extract modern Google Meet video entry points
+  const meetEntryPoint = createdEvent.conferenceData?.entryPoints?.find(
+    (ep: any) => ep.entryPointType === 'video'
+  );
+  const hangoutLink = meetEntryPoint?.uri || createdEvent.hangoutLink || '';
+
   return {
     htmlLink: createdEvent.htmlLink,
-    hangoutLink: createdEvent.hangoutLink,
+    hangoutLink: hangoutLink,
     alreadyExists: false
   };
 }
