@@ -18,7 +18,7 @@ import WhatsAppDispatch from './components/WhatsAppDispatch';
 import { initAuth, googleSignIn, googleLogout } from './lib/googleAuth';
 import { syncFreeBusyToCache } from './lib/googleCalendar';
 import { User } from 'firebase/auth';
-import { getForms, getRequests, addRequest as dbAddRequest, updateRequestStatus, seedRequests, deleteRequest, subscribeRequests } from './lib/db';
+import { getForms, getRequests, addRequest as dbAddRequest, updateRequestStatus, seedRequests, deleteRequest, subscribeRequests, updateRequestLinks } from './lib/db';
 import { getOrRefreshGoogleToken } from './lib/googleOAuthRefresh';
 
 export default function App() {
@@ -225,6 +225,9 @@ export default function App() {
                // Re-sync availability after booking
                syncFreeBusyToCache(googleToken);
                
+               // Save Google Calendar and Meet links back to the database!
+               updateRequestLinks(id, syncResult.htmlLink || '', syncResult.hangoutLink || '');
+
                // Send Gmail auto-reply with Meet link
                import('./lib/gmailAutoReply').then(({ sendAutoReply }) => {
                  sendAutoReply(googleToken, reqToUpdate, status, syncResult.hangoutLink);

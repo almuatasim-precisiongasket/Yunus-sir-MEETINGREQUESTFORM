@@ -193,6 +193,38 @@ export default function DetailModal({ request, onClose, onUpdateStatus, onDelete
                       <Loader2 size={12} className="animate-spin text-[#008FD5]" />
                       <span>Checking sync status...</span>
                     </div>
+                  ) : (existingEvent || request.calendarLink) ? (
+                    <div className="space-y-3 mt-1.5">
+                      <div className="flex items-center gap-2 text-xs text-green-700 font-semibold bg-green-50/70 p-2.5 rounded-lg border border-green-100">
+                        <span className="w-2 h-2 rounded-full bg-green-600 shrink-0"></span>
+                        <span>Successfully Synced to Google Calendar</span>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {(existingEvent?.hangoutLink || request.meetLink) && (
+                          <a 
+                            href={existingEvent?.hangoutLink || request.meetLink} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="px-3.5 py-2 bg-[#008FD5] hover:bg-[#008FD5]/90 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+                          >
+                            <Video size={13} />
+                            <span>Join Google Meet</span>
+                          </a>
+                        )}
+                        {(existingEvent?.htmlLink || request.calendarLink) && (
+                          <a 
+                            href={existingEvent?.htmlLink || request.calendarLink} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="px-3.5 py-1.5 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1"
+                          >
+                            <ExternalLink size={12} />
+                            <span>View Calendar Event</span>
+                          </a>
+                        )}
+                      </div>
+                    </div>
                   ) : !googleToken ? (
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-1">
                       <p className="text-xs text-gray-500 max-w-sm leading-relaxed">
@@ -210,38 +242,6 @@ export default function DetailModal({ request, onClose, onUpdateStatus, onDelete
                         </svg>
                         <span>Connect Calendar</span>
                       </button>
-                    </div>
-                  ) : existingEvent ? (
-                    <div className="space-y-3 mt-1.5">
-                      <div className="flex items-center gap-2 text-xs text-green-700 font-semibold bg-green-50/70 p-2.5 rounded-lg border border-green-100">
-                        <span className="w-2 h-2 rounded-full bg-green-600 shrink-0"></span>
-                        <span>Successfully Synced to Google Calendar</span>
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        {existingEvent.hangoutLink && (
-                          <a 
-                            href={existingEvent.hangoutLink} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="px-3.5 py-2 bg-[#008FD5] hover:bg-[#008FD5]/90 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
-                          >
-                            <Video size={13} />
-                            <span>Join Google Meet</span>
-                          </a>
-                        )}
-                        {existingEvent.htmlLink && (
-                          <a 
-                            href={existingEvent.htmlLink} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="px-3.5 py-1.5 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1"
-                          >
-                            <ExternalLink size={12} />
-                            <span>View Calendar Event</span>
-                          </a>
-                        )}
-                      </div>
                     </div>
                   ) : (
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-1.5">

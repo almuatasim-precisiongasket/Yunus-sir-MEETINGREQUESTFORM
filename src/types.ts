@@ -27,5 +27,8 @@ export interface MeetingRequest {
   status: RequestStatus;
   isUrgent?: boolean; // We might want to keep some top-level flags or map them from responses
   responses: Record<string, string | boolean>;
+  calendarLink?: string;
+  meetLink?: string;
 }
+
 

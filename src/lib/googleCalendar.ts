@@ -233,3 +233,34 @@ export async function syncToGoogleCalendar(
     alreadyExists: false
   };
 }
+
+/**
+ * Fetches Mr. Yunus's Google Calendar events for the next 24 hours.
+ */
+export async function fetchUpcomingEvents(accessToken: string): Promise<any[]> {
+  const timeMin = new Date().toISOString();
+  const timeMax = new Date(Date.now() + 24 * 3600 * 1000).toISOString(); // next 24 hours
+  const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&singleEvents=true&orderBy=startTime`;
+  
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!res.ok) {
+      console.warn('Failed to fetch upcoming Google Calendar events', await res.text());
+      return [];
+    }
+
+    const data = await res.json();
+    return data.items || [];
+  } catch (err) {
+    console.error('Error fetching upcoming events:', err);
+    return [];
+  }
+}
+

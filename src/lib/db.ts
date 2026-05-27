@@ -222,6 +222,24 @@ export async function updateRequestStatus(id: string, status: string): Promise<v
   }
 }
 
+export async function updateRequestLinks(id: string, calendarLink: string, meetLink: string): Promise<void> {
+  const localRequests = getLocal<MeetingRequest[]>('meeting_requests', []);
+  const index = localRequests.findIndex(r => r.id === id);
+  if (index !== -1) {
+    localRequests[index].calendarLink = calendarLink;
+    localRequests[index].meetLink = meetLink;
+    setLocal('meeting_requests', localRequests);
+  }
+
+  try {
+    const docRef = doc(db, 'requests', id);
+    await updateDoc(docRef, { calendarLink, meetLink });
+  } catch (err) {
+    console.error('Firestore updateRequestLinks error:', err);
+  }
+}
+
+
 export async function deleteRequest(id: string): Promise<void> {
   const localRequests = getLocal<MeetingRequest[]>('meeting_requests', []);
   const filtered = localRequests.filter(r => r.id !== id);
