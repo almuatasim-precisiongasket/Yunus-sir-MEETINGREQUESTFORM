@@ -1,15 +1,15 @@
-import { 
-  getFirestore, 
-  collection, 
-  doc, 
-  getDocs, 
-  getDoc, 
-  setDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
+import {
+  getFirestore,
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
   orderBy,
-  onSnapshot 
+  onSnapshot
 } from 'firebase/firestore';
 import { initializeApp, getApp } from 'firebase/app';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -124,7 +124,7 @@ export async function getForms(): Promise<FormTemplate[]> {
   } catch (err) {
     console.warn('Firestore getForms error, using local/fallback:', err);
   }
-  
+
   const localForms = getLocal<FormTemplate[]>('form_templates', [defaultForm]);
   return localForms;
 }
@@ -133,7 +133,7 @@ export async function addForm(form: FormTemplate): Promise<FormTemplate> {
   const localForms = getLocal<FormTemplate[]>('form_templates', [defaultForm]);
   localForms.push(form);
   setLocal('form_templates', localForms);
-  
+
   try {
     const docRef = doc(db, 'forms', form.id);
     await setDoc(docRef, { ...form, createdAt: form.createdAt || Date.now() });
@@ -327,7 +327,7 @@ export function subscribeRequests(
   } catch (err) {
     console.warn('Failed to initialize Firestore subscription:', err);
     onError(err);
-    return () => {};
+    return () => { };
   }
 }
 
