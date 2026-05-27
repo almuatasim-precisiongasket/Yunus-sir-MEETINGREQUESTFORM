@@ -16,7 +16,7 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
   const [copiedId, setCopiedId] = useState(false);
   
   const [responses, setResponses] = useState<Record<string, string | boolean>>({});
-  const [isUrgent, setIsUrgent] = useState(false);
+  const [priority, setPriority] = useState<'Normal' | 'Important' | 'Urgent'>('Normal');
   const [honeypot, setHoneypot] = useState('');
 
   const [busySlots, setBusySlots] = useState<{start: string, end: string}[]>([]);
@@ -137,7 +137,8 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
         formId: template.id,
         createdAt: Date.now(),
         status: 'Pending',
-        isUrgent,
+        isUrgent: priority === 'Urgent' || priority === 'Important',
+        priority,
         responses,
       };
 
@@ -354,13 +355,17 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
                 <div>
                   <span className="text-[10px] text-gray-400 font-medium block">Review Priority</span>
                   <span className="block mt-0.5">
-                    {lastSubmittedReq.isUrgent ? (
+                    {lastSubmittedReq.priority === 'Urgent' ? (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-100">
-                        Urgent Escalation
+                        Urgent
+                      </span>
+                    ) : lastSubmittedReq.priority === 'Important' ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-100">
+                        Important
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200/60">
-                        Standard Review
+                        Normal
                       </span>
                     )}
                   </span>
@@ -379,7 +384,7 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
                 onClick={() => {
                   setSubmitted(false);
                   setResponses({});
-                  setIsUrgent(false);
+                  setPriority('Normal');
                 }} 
                 className="w-full px-5 py-3 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-700 transition-all hover:shadow-xs focus:outline-none cursor-pointer"
               >
@@ -428,31 +433,43 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
             {template.fields.map(renderField)}
 
             <div className="col-span-1 md:col-span-2 py-1 mt-2 border-t border-slate-100 pt-5">
-              <label className="block text-xs font-semibold text-slate-700 mb-2">Is this urgent?</label>
-              <div className="flex gap-3 w-full sm:w-auto">
+              <label className="block text-xs font-semibold text-slate-700 mb-2">Request Priority</label>
+              <div className="flex flex-wrap gap-3 w-full sm:w-auto">
                 <button
                   type="button"
-                  onClick={() => setIsUrgent(false)}
+                  onClick={() => setPriority('Normal')}
                   className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium text-xs transition-all border cursor-pointer focus:outline-none ${
-                    !isUrgent
+                    priority === 'Normal'
                       ? 'bg-slate-100 border-slate-300 text-slate-800 shadow-3xs font-semibold'
                       : 'bg-white border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  <span className={`w-1.5 h-1.5 rounded-full ${!isUrgent ? 'bg-slate-500' : 'bg-slate-200'}`}></span>
-                  Standard Review
+                  <span className={`w-1.5 h-1.5 rounded-full ${priority === 'Normal' ? 'bg-slate-500' : 'bg-slate-200'}`}></span>
+                  Normal
                 </button>
                 <button
                   type="button"
-                  onClick={() => setIsUrgent(true)}
+                  onClick={() => setPriority('Important')}
                   className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium text-xs transition-all border cursor-pointer focus:outline-none ${
-                    isUrgent
+                    priority === 'Important'
+                      ? 'bg-amber-50 border-amber-200 text-amber-700 shadow-3xs font-semibold ring-2 ring-amber-500/5'
+                      : 'bg-white border-slate-200 text-slate-400 hover:text-amber-500 hover:bg-amber-50/20'
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${priority === 'Important' ? 'bg-amber-500' : 'bg-slate-200'}`}></span>
+                  Important
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPriority('Urgent')}
+                  className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium text-xs transition-all border cursor-pointer focus:outline-none ${
+                    priority === 'Urgent'
                       ? 'bg-rose-50 border-rose-200 text-rose-700 shadow-3xs font-semibold ring-2 ring-rose-500/5'
                       : 'bg-white border-slate-200 text-slate-400 hover:text-rose-500 hover:bg-rose-50/20'
                   }`}
                 >
-                  <span className={`w-1.5 h-1.5 rounded-full ${isUrgent ? 'bg-rose-500 animate-pulse' : 'bg-slate-200'}`}></span>
-                  Urgent Escalation
+                  <span className={`w-1.5 h-1.5 rounded-full ${priority === 'Urgent' ? 'bg-rose-500 animate-pulse' : 'bg-slate-200'}`}></span>
+                  Urgent
                 </button>
               </div>
             </div>

@@ -26,7 +26,8 @@ export interface MeetingRequest {
   formId: string;
   createdAt: number;
   status: RequestStatus;
-  isUrgent?: boolean; // We might want to keep some top-level flags or map them from responses
+  isUrgent?: boolean; // Keep for backward compatibility / urgent highlights
+  priority?: 'Normal' | 'Important' | 'Urgent'; // Request Priority level
   responses: Record<string, string | boolean>;
   calendarLink?: string;
   meetLink?: string;
