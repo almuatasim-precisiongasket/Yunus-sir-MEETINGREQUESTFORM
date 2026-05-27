@@ -8,7 +8,8 @@ import {
   updateDoc, 
   deleteDoc, 
   query, 
-  orderBy 
+  orderBy,
+  onSnapshot 
 } from 'firebase/firestore';
 import { initializeApp, getApp } from 'firebase/app';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -289,3 +290,27 @@ export async function seedRequests(): Promise<MeetingRequest[]> {
 
   return seedData;
 }
+
+export function subscribeRequests(
+  onUpdate: (requests: MeetingRequest[]) => void,
+  onError: (err: any) => void
+) {
+  try {
+    const q = query(collection(db, 'requests'), orderBy('createdAt', 'desc'));
+    return onSnapshot(q, (snapshot) => {
+      const requests: MeetingRequest[] = [];
+      snapshot.forEach((doc) => {
+        requests.push({ ...doc.data(), id: doc.id } as MeetingRequest);
+      });
+      onUpdate(requests);
+    }, (err) => {
+      console.warn('Firestore subscription update failed:', err);
+      onError(err);
+    });
+  } catch (err) {
+    console.warn('Failed to initialize Firestore subscription:', err);
+    onError(err);
+    return () => {};
+  }
+}
+

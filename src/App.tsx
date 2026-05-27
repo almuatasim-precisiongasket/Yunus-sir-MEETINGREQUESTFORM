@@ -18,7 +18,7 @@ import WhatsAppDispatch from './components/WhatsAppDispatch';
 import { initAuth, googleSignIn, googleLogout } from './lib/googleAuth';
 import { syncFreeBusyToCache } from './lib/googleCalendar';
 import { User } from 'firebase/auth';
-import { getForms, getRequests, addRequest as dbAddRequest, updateRequestStatus, seedRequests, deleteRequest } from './lib/db';
+import { getForms, getRequests, addRequest as dbAddRequest, updateRequestStatus, seedRequests, deleteRequest, subscribeRequests } from './lib/db';
 
 export default function App() {
   // Check if URL is for public request intake
@@ -146,24 +146,37 @@ export default function App() {
     }
   }, []);
 
-  // Fetch requests from backend and poll for updates dynamically
+  // Listen to requests in real-time with automatic LocalStorage fallback
   useEffect(() => {
-    // Only poll/fetch requests if we are in admin dashboard mode or if logged in
+    // Only fetch/subscribe requests if we are in admin dashboard mode
     if (isPublicForm) return;
 
-    const fetchRequests = async () => {
-      try {
-        const data = await getRequests();
+    let fallbackInterval: any = null;
+
+    // Attempt real-time Firestore subscription
+    const unsubscribe = subscribeRequests(
+      (data) => {
         setRequests(data);
-      } catch (err) {
-        console.error('Failed to fetch requests:', err);
+      },
+      () => {
+        // Fallback: If subscription fails or is unauthorized, use standard fallback polling
+        const poll = async () => {
+          try {
+            const data = await getRequests();
+            setRequests(data);
+          } catch (e) {
+            console.error('LocalStorage requests fallback failed:', e);
+          }
+        };
+        poll();
+        fallbackInterval = setInterval(poll, 5000);
       }
+    );
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+      if (fallbackInterval) clearInterval(fallbackInterval);
     };
-
-    fetchRequests();
-    const interval = setInterval(fetchRequests, 5000); // Poll every 5s for real-time updates
-
-    return () => clearInterval(interval);
   }, [isPublicForm, isLoggedIn]);
 
   const addRequest = async (req: MeetingRequest) => {

@@ -17,6 +17,7 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
   
   const [responses, setResponses] = useState<Record<string, string | boolean>>({});
   const [isUrgent, setIsUrgent] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
 
   const [busySlots, setBusySlots] = useState<{start: string, end: string}[]>([]);
   const [businessSettings, setBusinessSettings] = useState<{businessStartHour: number, businessEndHour: number} | null>(null);
@@ -116,6 +117,13 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (honeypot) {
+      console.warn("Spam bot submission caught via honeypot.");
+      setSubmitted(true);
+      setIsSubmitting(false);
+      return;
+    }
+
     setIsSubmitting(true);
     
     // Fake network request delay for premium feel
@@ -407,6 +415,18 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
           </div>
 
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-lg gap-y-5">
+            {/* Honeypot Spam Bot Trap */}
+            <div className="hidden" aria-hidden="true">
+              <input 
+                type="text" 
+                name="website_url_field" 
+                value={honeypot} 
+                onChange={e => setHoneypot(e.target.value)} 
+                tabIndex={-1} 
+                autoComplete="off" 
+              />
+            </div>
+
             {template.fields.map(renderField)}
 
             <div className="col-span-1 md:col-span-2 py-1 mt-2 border-t border-slate-100 pt-5">
