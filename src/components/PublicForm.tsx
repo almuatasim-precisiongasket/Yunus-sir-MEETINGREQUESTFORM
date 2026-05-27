@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { MeetingRequest, FormTemplate, FormField } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, ChevronDown, Send, Loader2, Copy, Check, Calendar, Clock, User, ShieldCheck, Sparkles, CalendarX2, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -12,6 +12,21 @@ interface CustomDatePickerProps {
 
 function CustomDatePicker({ value, onChange, hasError }: CustomDatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
   const [currentDate, setCurrentDate] = useState(() => {
     if (value) {
       try {
@@ -76,7 +91,7 @@ function CustomDatePicker({ value, onChange, hasError }: CustomDatePickerProps) 
   };
 
   return (
-    <div className="w-full relative flex flex-col">
+    <div className="w-full relative flex flex-col" ref={containerRef}>
       {/* Clickable Trigger Input */}
       <div 
         onClick={() => setIsOpen(!isOpen)}
@@ -498,18 +513,33 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
                   <CalendarX2 size={14} /> No availability on this date
                </div>
             ) : (
-              <div className="relative">
-                <select 
-                  className={`${commonClasses} appearance-none cursor-pointer pr-10 ${hasError ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10' : ''}`} 
-                  value={String(responses[field.id] || '')} 
-                  onChange={e => { handleChange(field.id, e.target.value); clearError(); }} 
-                >
-                  <option value="" disabled>Select a free time slot</option>
-                  {availableTimeSlots.map(timeStr => (
-                    <option key={timeStr} value={timeStr}>{formatTimeFriendly(timeStr)}</option>
-                  ))}
-                </select>
-                <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 mt-2">
+                {availableTimeSlots.map(timeStr => {
+                  const isSelected = responses[field.id] === timeStr;
+                  return (
+                    <motion.button
+                      key={timeStr}
+                      type="button"
+                      whileHover={{ scale: 1.04, y: -1 }}
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => { handleChange(field.id, timeStr); clearError(); }}
+                      className={`relative py-2.5 px-3 rounded-xl text-[11px] font-bold transition-all border flex items-center justify-center cursor-pointer min-h-[40px] select-none ${
+                        isSelected
+                          ? 'text-white border-[#008FD5] shadow-xs'
+                          : 'bg-slate-50/50 hover:bg-white text-slate-700 border-slate-200 hover:border-[#008FD5]/40 hover:text-[#008FD5] hover:shadow-2xs'
+                      }`}
+                    >
+                      {isSelected && (
+                        <motion.div
+                          layoutId="active-time-pill"
+                          className="absolute inset-0 bg-[#008FD5] rounded-xl -z-10 shadow-sm shadow-blue-500/20"
+                          transition={{ type: "spring", stiffness: 380, damping: 28 }}
+                        />
+                      )}
+                      <span className="relative z-10">{formatTimeFriendly(timeStr)}</span>
+                    </motion.button>
+                  );
+                })}
               </div>
             )}
           </>

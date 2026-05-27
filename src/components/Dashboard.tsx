@@ -278,8 +278,9 @@ export default function Dashboard({ requests, onUpdateStatus, onSeedDemoData, on
                                initial={{ opacity: 0, y: 10 }}
                                animate={{ opacity: 1, y: 0 }}
                                exit={{ opacity: 0, scale: 0.95 }}
+                               whileHover={{ y: -1.5, boxShadow: "0 6px 20px rgba(11,31,51,0.03)" }}
                                onClick={() => setSelectedReqId(req.id)} 
-                               className={`group flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-md p-4 md:p-lg items-stretch md:items-center hover:bg-[#008FD5]/5 transition-all duration-200 cursor-pointer ${req.status === 'Declined' ? 'opacity-70' : ''}`}
+                               className={`group flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-md p-4 md:p-lg items-stretch md:items-center hover:bg-[#008FD5]/5 hover:border-gray-200 transition-all duration-200 cursor-pointer border-y border-transparent ${req.status === 'Declined' ? 'opacity-70' : ''}`}
                            >
                                {/* Mobile Accent Header */}
                                <div className="md:hidden flex justify-between items-center w-full pb-2 border-b border-gray-100 mb-1">
@@ -435,16 +436,40 @@ export default function Dashboard({ requests, onUpdateStatus, onSeedDemoData, on
                 <p className="text-[10px] text-gray-400">No events are scheduled on Google Calendar for the next 24 hours.</p>
               </div>
             ) : (
-              <div className="relative border-l border-gray-100 pl-4 ml-2 space-y-5 py-2">
+              <motion.div 
+                initial="hidden"
+                animate="show"
+                variants={{
+                  hidden: { opacity: 0 },
+                  show: {
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.08
+                    }
+                  }
+                }}
+                className="relative border-l border-gray-100 pl-4 ml-2 space-y-5 py-2"
+              >
                 {upcomingEvents.map((event) => {
                   const startTime = event.start?.dateTime || event.start?.date || '';
                   const endTime = event.end?.dateTime || event.end?.date || '';
                   const isMeet = !!event.hangoutLink;
                   
                   return (
-                    <div key={event.id} className="relative group/item space-y-1">
+                    <motion.div 
+                      key={event.id} 
+                      variants={{
+                        hidden: { opacity: 0, x: -10 },
+                        show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 100, damping: 15 } }
+                      }}
+                      whileHover={{ x: 3 }}
+                      className="relative group/item space-y-1 cursor-default"
+                    >
                       {/* Timeline dot element */}
-                      <span className="absolute -left-[21px] top-1.5 w-2.5 h-2.5 rounded-full bg-[#008FD5] border-2 border-white ring-4 ring-sky-50 group-hover/item:bg-emerald-500 transition-colors"></span>
+                      <motion.span 
+                        whileHover={{ scale: 1.3 }}
+                        className="absolute -left-[21px] top-1.5 w-2.5 h-2.5 rounded-full bg-[#008FD5] border-2 border-white ring-4 ring-sky-50 group-hover/item:bg-emerald-500 transition-colors duration-200"
+                      ></motion.span>
                       
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[10px] text-gray-400 font-bold tracking-wider">
@@ -466,10 +491,10 @@ export default function Dashboard({ requests, onUpdateStatus, onSeedDemoData, on
                       {event.description && (
                         <p className="text-[10px] text-gray-400 line-clamp-1">{event.description}</p>
                       )}
-                    </div>
+                    </motion.div>
                   );
                 })}
-              </div>
+              </motion.div>
             )}
           </div>
         </div>
