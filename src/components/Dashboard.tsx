@@ -18,7 +18,8 @@ import {
   ExternalLink, 
   Loader2, 
   ShieldCheck, 
-  Sparkles 
+  Sparkles,
+  AlertCircle
 } from 'lucide-react';
 
 function getRequestName(r: MeetingRequest): string {
