@@ -63,20 +63,49 @@ function setLocal<T>(key: string, val: T) {
 
 // --- API IMPLEMENTATION ---
 
-export async function getSettings(): Promise<{ businessStartHour: number; businessEndHour: number }> {
+export interface BlackoutDate {
+  date: string;
+  label: string;
+}
+
+export interface SettingsData {
+  businessStartHour: number;
+  businessEndHour: number;
+  blackoutDates: BlackoutDate[];
+  adminEmail: string;
+  adminPhone: string;
+  emailAlertsEnabled: boolean;
+  whatsappAlertsEnabled: boolean;
+}
+
+const defaultSettingsFallback: SettingsData = {
+  businessStartHour: 9,
+  businessEndHour: 17,
+  blackoutDates: [],
+  adminEmail: '',
+  adminPhone: '',
+  emailAlertsEnabled: false,
+  whatsappAlertsEnabled: false
+};
+
+export async function getSettings(): Promise<SettingsData> {
   try {
     const docRef = doc(db, 'settings', 'global');
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      return docSnap.data() as any;
+      const data = docSnap.data();
+      return {
+        ...defaultSettingsFallback,
+        ...data
+      } as SettingsData;
     }
   } catch (err) {
     console.warn('Firestore getSettings error, using local/fallback:', err);
   }
-  return getLocal('sys_settings', { businessStartHour: 9, businessEndHour: 17 });
+  return getLocal('sys_settings', defaultSettingsFallback);
 }
 
-export async function saveSettings(settings: { businessStartHour: number; businessEndHour: number }): Promise<void> {
+export async function saveSettings(settings: SettingsData): Promise<void> {
   setLocal('sys_settings', settings);
   try {
     const docRef = doc(db, 'settings', 'global');

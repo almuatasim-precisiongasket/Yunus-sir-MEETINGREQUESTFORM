@@ -18,7 +18,7 @@ import WhatsAppDispatch from './components/WhatsAppDispatch';
 import { initAuth, googleSignIn, googleLogout } from './lib/googleAuth';
 import { syncFreeBusyToCache } from './lib/googleCalendar';
 import { User } from 'firebase/auth';
-import { getForms, getRequests, addRequest as dbAddRequest, updateRequestStatus, seedRequests, deleteRequest, subscribeRequests, updateRequestLinks } from './lib/db';
+import { getForms, getRequests, addRequest as dbAddRequest, updateRequestStatus, seedRequests, deleteRequest, subscribeRequests, updateRequestLinks, getSettings } from './lib/db';
 import { getOrRefreshGoogleToken } from './lib/googleOAuthRefresh';
 
 export default function App() {
@@ -205,6 +205,45 @@ export default function App() {
       const saved = await dbAddRequest(req);
       // Update local requests list with actual saved item to sync statuses
       setRequests(prev => prev.map(r => r.id === req.id ? saved : r));
+
+      // Trigger multi-channel administrator notifications
+      try {
+        const sysSettings = await getSettings();
+
+        // 1. Gmail Alert Channel
+        if (sysSettings.emailAlertsEnabled && sysSettings.adminEmail) {
+          const token = googleToken || await getOrRefreshGoogleToken();
+          if (token) {
+            import('./lib/gmailAutoReply').then(({ sendAdminNotificationEmail }) => {
+              sendAdminNotificationEmail(token, sysSettings.adminEmail, req);
+            });
+          } else {
+            console.warn("Could not dispatch administrative Gmail alert: Background OAuth token not authenticated.");
+          }
+        }
+
+        // 2. WhatsApp/SMS Alert Channel
+        if (sysSettings.whatsappAlertsEnabled && sysSettings.adminPhone) {
+          try {
+            const { doc, setDoc } = await import('firebase/firestore');
+            const { db } = await import('./lib/db');
+            const notifId = `notif-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            await setDoc(doc(db, 'admin_notifications', notifId), {
+              id: notifId,
+              requestId: req.id,
+              phone: sysSettings.adminPhone,
+              message: `PRECI FORM ALERT: New booking request from ${req.responses.fullName} (${req.responses.company || 'No Company'}). Date: ${req.responses.preferredDate} at ${req.responses.preferredTime}. Category: ${req.responses.category}.`,
+              status: 'queued',
+              createdAt: Date.now()
+            });
+          } catch (fsErr) {
+            console.warn("Local fallback or Firestore write failed for WhatsApp log:", fsErr);
+          }
+          showToast(`Administrative alert dispatched to WhatsApp: ${sysSettings.adminPhone}`, 'success');
+        }
+      } catch (settingsErr) {
+        console.error('Failed to trigger admin notification dispatch:', settingsErr);
+      }
     } catch (err) {
       console.error('Failed to report request submission:', err);
     }

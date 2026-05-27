@@ -2,15 +2,16 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { MeetingRequest, FormTemplate, FormField } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, ChevronDown, Send, Loader2, Copy, Check, Calendar, Clock, User, ShieldCheck, Sparkles, CalendarX2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { getCalendarAvailability, getSettings } from '../lib/db';
+import { getCalendarAvailability, getSettings, SettingsData } from '../lib/db';
 
 interface CustomDatePickerProps {
   value: string;
   onChange: (val: string) => void;
   hasError: boolean;
+  blackoutDates?: { date: string; label: string }[];
 }
 
-function CustomDatePicker({ value, onChange, hasError }: CustomDatePickerProps) {
+function CustomDatePicker({ value, onChange, hasError, blackoutDates = [] }: CustomDatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -70,12 +71,20 @@ function CustomDatePicker({ value, onChange, hasError }: CustomDatePickerProps) 
   // Generate days array
   const days = [];
   for (let i = 1; i <= daysInMonth; i++) {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const dateStr = `${year}-${pad(month + 1)}-${pad(i)}`;
     const cellDate = new Date(year, month, i);
     cellDate.setHours(0, 0, 0, 0);
     const isPast = cellDate < today;
-    const isSelected = value === `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+
+    // Check if blacked out
+    const blackoutMatch = blackoutDates.find(bd => bd.date === dateStr);
+    const isBlackout = !!blackoutMatch;
+    const blackoutLabel = blackoutMatch?.label || '';
+
+    const isSelected = value === dateStr;
     const isToday = today.getTime() === cellDate.getTime();
-    days.push({ day: i, isPast, isSelected, isToday });
+    days.push({ day: i, isPast, isSelected, isToday, isBlackout, blackoutLabel });
   }
 
   const weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -167,32 +176,41 @@ function CustomDatePicker({ value, onChange, hasError }: CustomDatePickerProps) 
               ))}
 
               {/* Real Day cells */}
-              {days.map(({ day, isPast, isSelected, isToday }) => (
-                <button
-                  key={day}
-                  type="button"
-                  disabled={isPast}
-                  onClick={() => handleSelectDay(day)}
-                  className={`h-7 w-7 rounded-lg text-xs font-bold flex items-center justify-center relative cursor-pointer transition-all duration-150 select-none ${
-                    isPast 
-                      ? 'text-slate-200 cursor-not-allowed font-medium' 
-                      : isSelected 
-                      ? 'text-white' 
-                      : isToday 
-                      ? 'text-[#008FD5] bg-sky-50/70 border border-sky-100/50' 
-                      : 'text-slate-700 hover:bg-slate-50 hover:text-[#008FD5]'
-                  }`}
-                >
-                  {isSelected && (
-                    <motion.div 
-                      layoutId="active-date-pill"
-                      className="absolute inset-0 bg-[#008FD5] rounded-lg -z-10 shadow-sm shadow-blue-500/20"
-                      transition={{ type: "spring", stiffness: 380, damping: 28 }}
-                    />
-                  )}
-                  <span>{day}</span>
-                </button>
-              ))}
+              {days.map(({ day, isPast, isSelected, isToday, isBlackout, blackoutLabel }) => {
+                const isDisabled = isPast || isBlackout;
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    disabled={isDisabled}
+                    onClick={() => handleSelectDay(day)}
+                    title={isBlackout ? `Holiday/Blackout: ${blackoutLabel}` : undefined}
+                    className={`h-7 w-7 rounded-lg text-xs font-bold flex items-center justify-center relative cursor-pointer transition-all duration-150 select-none ${
+                      isDisabled 
+                        ? isBlackout
+                          ? 'text-rose-400 bg-rose-50/40 border border-rose-100/30 cursor-not-allowed font-semibold'
+                          : 'text-slate-200 cursor-not-allowed font-medium' 
+                        : isSelected 
+                        ? 'text-white font-black' 
+                        : isToday 
+                        ? 'text-[#008FD5] bg-sky-50/70 border border-sky-100/50' 
+                        : 'text-slate-700 hover:bg-slate-50 hover:text-[#008FD5]'
+                    }`}
+                  >
+                    {isSelected && (
+                      <motion.div 
+                        layoutId="active-date-pill"
+                        className="absolute inset-0 bg-[#008FD5] rounded-lg -z-10 shadow-sm shadow-blue-500/20"
+                        transition={{ type: "spring", stiffness: 380, damping: 28 }}
+                      />
+                    )}
+                    <span>{day}</span>
+                    {isBlackout && (
+                      <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-rose-400 rounded-full" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </motion.div>
         )}
@@ -216,7 +234,7 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
   const [honeypot, setHoneypot] = useState('');
 
   const [busySlots, setBusySlots] = useState<{start: string, end: string}[]>([]);
-  const [businessSettings, setBusinessSettings] = useState<{businessStartHour: number, businessEndHour: number} | null>(null);
+  const [businessSettings, setBusinessSettings] = useState<SettingsData | null>(null);
 
   // Micro-interaction validation and morphing states
   const [errorFields, setErrorFields] = useState<Record<string, string>>({});
@@ -490,6 +508,7 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
               value={String(responses[field.id] || '')} 
               onChange={val => { handleChange(field.id, val); clearError(); }}
               hasError={hasError}
+              blackoutDates={businessSettings?.blackoutDates || []}
             />
           </>
         );

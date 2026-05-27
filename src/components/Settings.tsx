@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Loader2, AlertCircle, Clock, ShieldCheck, Key, RefreshCw, Unlink } from 'lucide-react';
-import { motion } from 'motion/react';
-import { getSettings, saveSettings, getGoogleCredentials, saveGoogleCredentials } from '../lib/db';
+import { Save, Loader2, AlertCircle, Clock, ShieldCheck, Key, RefreshCw, Unlink, Plus, Trash2, Mail, MessageSquare, CalendarX2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { getSettings, saveSettings, getGoogleCredentials, saveGoogleCredentials, BlackoutDate, SettingsData } from '../lib/db';
 import { exchangeCodeForRefreshToken } from '../lib/googleOAuthRefresh';
-
-interface SettingsData {
-  businessStartHour: number;
-  businessEndHour: number;
-}
 
 export default function Settings() {
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  // Local state for adding blackout dates
+  const [newBlackoutDate, setNewBlackoutDate] = useState('');
+  const [newBlackoutLabel, setNewBlackoutLabel] = useState('');
 
   // Google Permanent Connection State
   const [clientId, setClientId] = useState('');
@@ -22,7 +21,7 @@ export default function Settings() {
   const [linkStatus, setLinkStatus] = useState<'idle' | 'success' | 'error' | 'exchanging'>('idle');
 
   useEffect(() => {
-    // 1. Fetch business hours
+    // 1. Fetch settings (business hours + blackout dates + admin notifications)
     getSettings()
       .then(data => setSettings(data))
       .catch(console.error);
@@ -77,6 +76,40 @@ export default function Settings() {
       exchangeCode();
     }
   }, []);
+
+  const handleAddBlackoutDate = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!newBlackoutDate || !newBlackoutLabel.trim()) {
+      alert('Please fill out both the date and the holiday description label.');
+      return;
+    }
+    
+    const exists = settings?.blackoutDates.some(bd => bd.date === newBlackoutDate);
+    if (exists) {
+      alert('This date is already configured as a blackout day.');
+      return;
+    }
+
+    if (settings) {
+      const updatedDates = [...settings.blackoutDates, { date: newBlackoutDate, label: newBlackoutLabel.trim() }]
+        .sort((a, b) => a.date.localeCompare(b.date));
+      setSettings({
+        ...settings,
+        blackoutDates: updatedDates
+      });
+      setNewBlackoutDate('');
+      setNewBlackoutLabel('');
+    }
+  };
+
+  const handleRemoveBlackoutDate = (dateToRemove: string) => {
+    if (settings) {
+      setSettings({
+        ...settings,
+        blackoutDates: settings.blackoutDates.filter(bd => bd.date !== dateToRemove)
+      });
+    }
+  };
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,6 +251,200 @@ export default function Settings() {
                  <span>Start hour must be explicitly before end hour.</span>
                </div>
             )}
+          </div>
+        </div>
+
+        {/* CARD 2: Blackout Dates & Holidays Manager */}
+        <div className="bg-white rounded-xl shadow-sm border border-[#E5E7EB] overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
+            <CalendarX2 size={18} className="text-[#008FD5]" />
+            <h2 className="font-bold text-[#0B1F33]">Blackout Dates & Holidays</h2>
+          </div>
+          <div className="p-6 space-y-6">
+            <p className="text-sm text-gray-600">
+              Select specific holidays or blackout dates. Users visiting your public request form will be blocked from booking these days.
+            </p>
+
+            <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl p-4 space-y-4">
+              <h3 className="text-xs font-bold text-[#0B1F33] uppercase tracking-wider">Configure New Blackout Day</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div className="md:col-span-1">
+                  <label className="block text-[10px] font-bold text-[#6B7280] uppercase tracking-wider mb-1.5">Date</label>
+                  <input
+                    type="date"
+                    value={newBlackoutDate}
+                    onChange={e => setNewBlackoutDate(e.target.value)}
+                    className="w-full bg-white border border-[#E5E7EB] text-[#111827] rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-[#008FD5] transition-all"
+                  />
+                </div>
+                <div className="md:col-span-1">
+                  <label className="block text-[10px] font-bold text-[#6B7280] uppercase tracking-wider mb-1.5">Reason / Holiday Label</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. New Year Break"
+                    value={newBlackoutLabel}
+                    onChange={e => setNewBlackoutLabel(e.target.value)}
+                    className="w-full bg-white border border-[#E5E7EB] text-[#111827] rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-[#008FD5] transition-all"
+                  />
+                </div>
+                <div className="md:col-span-1">
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleAddBlackoutDate}
+                    className="w-full bg-[#008FD5] hover:bg-[#008FD5]/90 text-white rounded-xl py-2.5 text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Plus size={14} />
+                    <span>Add Blackout Day</span>
+                  </motion.button>
+                </div>
+              </div>
+            </div>
+
+            {/* List of Configured Blackout Dates */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-bold text-[#6B7280] uppercase tracking-wider">Active Blackout Calendar ({settings.blackoutDates?.length || 0})</h3>
+              
+              {!settings.blackoutDates || settings.blackoutDates.length === 0 ? (
+                <div className="text-center py-6 bg-slate-50 border border-dashed border-slate-200 rounded-2xl">
+                  <p className="text-xs text-slate-400 font-semibold">No blackout dates or holidays configured yet.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <AnimatePresence mode="popLayout">
+                    {settings.blackoutDates.map(bd => (
+                      <motion.div
+                        key={bd.date}
+                        layout
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="bg-white border border-[#E5E7EB] hover:border-slate-300 rounded-xl p-3.5 flex items-center justify-between shadow-sm group hover:shadow transition-all"
+                      >
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-black text-[#008FD5] bg-sky-50 px-2 py-0.5 rounded-full w-max">
+                            {new Date(bd.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                          <span className="text-xs font-bold text-slate-800 tracking-tight">{bd.label}</span>
+                        </div>
+                        <motion.button
+                          type="button"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => handleRemoveBlackoutDate(bd.date)}
+                          className="text-slate-400 hover:text-rose-600 p-1.5 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
+                          title="Delete Blackout Date"
+                        >
+                          <Trash2 size={14} />
+                        </motion.button>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* CARD 3: Admin Notification Routing */}
+        <div className="bg-white rounded-xl shadow-sm border border-[#E5E7EB] overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
+            <Mail size={18} className="text-[#008FD5]" />
+            <h2 className="font-bold text-[#0B1F33]">Admin Alert & Notification Routing</h2>
+          </div>
+          <div className="p-6 space-y-6">
+            <p className="text-sm text-gray-600">
+              Get notified immediately whenever a client submits a new booking request. Configure your channels below.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Channel 1: Gmail Alert */}
+              <div className={`border rounded-2xl p-5 transition-all ${
+                settings.emailAlertsEnabled 
+                  ? 'border-[#008FD5]/40 bg-sky-50/10 shadow-sm' 
+                  : 'border-[#E5E7EB] bg-slate-50/20'
+              }`}>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className={`p-2 rounded-xl ${settings.emailAlertsEnabled ? 'bg-[#008FD5]/10 text-[#008FD5]' : 'bg-slate-100 text-slate-400'}`}>
+                      <Mail size={16} />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-[#0B1F33]">Gmail Admin Alerts</h4>
+                      <p className="text-[10px] text-gray-500 mt-0.5">Receive structured request summaries via Gmail.</p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={settings.emailAlertsEnabled}
+                    onChange={e => setSettings({...settings, emailAlertsEnabled: e.target.checked})}
+                    className="w-4 h-4 text-[#008FD5] rounded border-gray-300 focus:ring-[#008FD5] cursor-pointer"
+                  />
+                </div>
+
+                {settings.emailAlertsEnabled && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                    animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
+                    className="space-y-1.5 overflow-hidden"
+                  >
+                    <label className="block text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">Admin Notification Email</label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="e.g. admin@precisiongasket.com"
+                      value={settings.adminEmail}
+                      onChange={e => setSettings({...settings, adminEmail: e.target.value})}
+                      className="w-full bg-white border border-[#E5E7EB] text-[#111827] rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-[#008FD5] transition-all"
+                    />
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Channel 2: WhatsApp / SMS Alert */}
+              <div className={`border rounded-2xl p-5 transition-all ${
+                settings.whatsappAlertsEnabled 
+                  ? 'border-[#008FD5]/40 bg-sky-50/10 shadow-sm' 
+                  : 'border-[#E5E7EB] bg-slate-50/20'
+              }`}>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className={`p-2 rounded-xl ${settings.whatsappAlertsEnabled ? 'bg-[#008FD5]/10 text-[#008FD5]' : 'bg-slate-100 text-slate-400'}`}>
+                      <MessageSquare size={16} />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-[#0B1F33]">WhatsApp / SMS Alerts</h4>
+                      <p className="text-[10px] text-gray-500 mt-0.5">Logs instant scheduling alerts in your dispatch queue.</p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={settings.whatsappAlertsEnabled}
+                    onChange={e => setSettings({...settings, whatsappAlertsEnabled: e.target.checked})}
+                    className="w-4 h-4 text-[#008FD5] rounded border-gray-300 focus:ring-[#008FD5] cursor-pointer"
+                  />
+                </div>
+
+                {settings.whatsappAlertsEnabled && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                    animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
+                    className="space-y-1.5 overflow-hidden"
+                  >
+                    <label className="block text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">Admin Notification Phone</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. +1 (555) 123-4567"
+                      value={settings.adminPhone}
+                      onChange={e => setSettings({...settings, adminPhone: e.target.value})}
+                      className="w-full bg-white border border-[#E5E7EB] text-[#111827] rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-[#008FD5] transition-all"
+                    />
+                  </motion.div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
