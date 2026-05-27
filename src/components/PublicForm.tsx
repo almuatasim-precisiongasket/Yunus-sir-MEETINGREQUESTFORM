@@ -1,8 +1,140 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { MeetingRequest, FormTemplate, FormField } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2, ChevronDown, Send, Loader2, Copy, Check, Calendar, Clock, User, ShieldCheck, Sparkles, CalendarX2 } from 'lucide-react';
+import { CheckCircle2, ChevronDown, Send, Loader2, Copy, Check, Calendar, Clock, User, ShieldCheck, Sparkles, CalendarX2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getCalendarAvailability, getSettings } from '../lib/db';
+
+interface CustomDatePickerProps {
+  value: string;
+  onChange: (val: string) => void;
+  hasError: boolean;
+}
+
+function CustomDatePicker({ value, onChange, hasError }: CustomDatePickerProps) {
+  const [currentDate, setCurrentDate] = useState(() => {
+    if (value) {
+      try {
+        return new Date(value + 'T00:00:00');
+      } catch (e) {}
+    }
+    return new Date();
+  });
+
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  // Days in month
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  // First day of month (0-6)
+  const firstDayIndex = new Date(year, month, 1).getDay();
+
+  const handlePrevMonth = () => {
+    setCurrentDate(new Date(year, month - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentDate(new Date(year, month + 1, 1));
+  };
+
+  const handleSelectDay = (day: number) => {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const dateStr = `${year}-${pad(month + 1)}-${pad(day)}`;
+    onChange(dateStr);
+  };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Generate days array
+  const days = [];
+  for (let i = 1; i <= daysInMonth; i++) {
+    const cellDate = new Date(year, month, i);
+    cellDate.setHours(0, 0, 0, 0);
+    const isPast = cellDate < today;
+    const isSelected = value === `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+    const isToday = today.getTime() === cellDate.getTime();
+    days.push({ day: i, isPast, isSelected, isToday });
+  }
+
+  const weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+  return (
+    <div className={`bg-white border rounded-2xl p-4 shadow-sm w-full font-sans transition-all duration-200 ${hasError ? 'border-red-400 ring-4 ring-red-400/10' : 'border-slate-200/80 hover:border-slate-300'}`}>
+      {/* Month Navigation */}
+      <div className="flex items-center justify-between mb-4 border-b border-slate-50 pb-2">
+        <h4 className="text-xs font-black text-slate-800 tracking-tight">{monthNames[month]} {year}</h4>
+        <div className="flex gap-1.5">
+          <motion.button 
+            type="button" 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handlePrevMonth}
+            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors cursor-pointer flex items-center justify-center border border-slate-100"
+          >
+            <ChevronLeft size={13} className="stroke-[2.5px]" />
+          </motion.button>
+          <motion.button 
+            type="button" 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleNextMonth}
+            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors cursor-pointer flex items-center justify-center border border-slate-100"
+          >
+            <ChevronRight size={13} className="stroke-[2.5px]" />
+          </motion.button>
+        </div>
+      </div>
+
+      {/* Weekdays Headers */}
+      <div className="grid grid-cols-7 gap-1 text-center mb-2 font-sans">
+        {weekdays.map(d => (
+          <span key={d} className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{d}</span>
+        ))}
+      </div>
+
+      {/* Days Grid */}
+      <div className="grid grid-cols-7 gap-1 text-center font-sans">
+        {/* Empty cells for leading offset */}
+        {Array.from({ length: firstDayIndex }).map((_, idx) => (
+          <span key={`empty-${idx}`} className="h-7 w-7 flex items-center justify-center"></span>
+        ))}
+
+        {/* Real Day cells */}
+        {days.map(({ day, isPast, isSelected, isToday }) => (
+          <button
+            key={day}
+            type="button"
+            disabled={isPast}
+            onClick={() => handleSelectDay(day)}
+            className={`h-7 w-7 rounded-lg text-xs font-bold flex items-center justify-center relative cursor-pointer transition-all duration-150 select-none ${
+              isPast 
+                ? 'text-slate-200 cursor-not-allowed font-medium' 
+                : isSelected 
+                ? 'text-white' 
+                : isToday 
+                ? 'text-[#008FD5] bg-sky-50/70 border border-sky-100/50' 
+                : 'text-slate-700 hover:bg-slate-50 hover:text-[#008FD5]'
+            }`}
+          >
+            {isSelected && (
+              <motion.div 
+                layoutId="active-date-pill"
+                className="absolute inset-0 bg-[#008FD5] rounded-lg -z-10 shadow-sm shadow-blue-500/20"
+                transition={{ type: "spring", stiffness: 380, damping: 28 }}
+              />
+            )}
+            <span>{day}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 interface PublicFormProps {
   template: FormTemplate;
@@ -286,14 +418,13 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
       case 'date':
         return inputWrapper(
           <>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700 mb-2">
               {field.label} {field.required ? '' : <span className="opacity-60 font-normal">(Optional)</span>}
             </label>
-            <input 
-              type="date" 
-              className={`${commonClasses} ${hasError ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10' : ''}`} 
+            <CustomDatePicker 
               value={String(responses[field.id] || '')} 
-              onChange={e => { handleChange(field.id, e.target.value); clearError(); }} 
+              onChange={val => { handleChange(field.id, val); clearError(); }}
+              hasError={hasError}
             />
           </>
         );
