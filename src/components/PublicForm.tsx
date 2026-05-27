@@ -165,6 +165,7 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
             <textarea 
               required={field.required} 
               rows={4} 
+              placeholder={field.placeholder}
               className={`${commonClasses} resize-y`} 
               value={String(responses[field.id] || '')} 
               onChange={e => handleChange(field.id, e.target.value)} 
@@ -257,6 +258,7 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
             <input 
               required={field.required} 
               type={field.type === 'phone' ? 'tel' : 'text'} 
+              placeholder={field.placeholder}
               className={commonClasses} 
               value={String(responses[field.id] || '')} 
               onChange={e => handleChange(field.id, e.target.value)} 
@@ -455,11 +457,14 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
               </div>
             </div>
 
-            <div className="col-span-1 md:col-span-2 mt-md flex justify-end">
+            <div className="col-span-1 md:col-span-2 mt-md flex flex-col sm:flex-row items-center justify-between gap-4 pt-5 border-t border-slate-100">
+              <span className="text-[10px] md:text-xs text-slate-400 font-medium flex items-center gap-1.5">
+                <ShieldCheck size={13} className="text-[#008FD5]" /> All submissions are reviewed confidentially by our coordination office.
+              </span>
               <button 
                 type="submit" 
                 disabled={isSubmitting}
-                className="w-full md:w-auto bg-[#008FD5] text-white font-label-md text-xs px-8 py-3.5 rounded-xl hover:bg-[#008FD5]/90 transition-all hover:shadow-md active:scale-97 flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none cursor-pointer focus:outline-none"
+                className="w-full sm:w-auto bg-[#008FD5] text-white font-label-md text-xs px-8 py-3.5 rounded-xl hover:bg-[#008FD5]/90 transition-all hover:shadow-md active:scale-97 flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none cursor-pointer focus:outline-none"
               >
                   {isSubmitting ? 'Securing Request...' : 'Submit Meeting Proposal'}
                   {!isSubmitting && <Send size={14} />}

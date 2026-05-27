@@ -7,6 +7,7 @@ export interface FormField {
   required: boolean;
   options?: string[]; // Used if type === 'dropdown'
   isSystem?: boolean; // If true, cannot be removed (but can be renamed/reordered)
+  placeholder?: string; // Guidance for input fields
 }
 
 export interface FormTemplate {
