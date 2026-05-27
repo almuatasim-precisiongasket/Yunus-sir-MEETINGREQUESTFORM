@@ -372,7 +372,7 @@ export default function App() {
               href="/?request=true" 
               className="text-xs text-[#008FD5] hover:underline font-medium inline-flex items-center gap-1"
             >
-              <ExternalLink size={12} /> Go to Public Meeting Request Form
+              <ExternalLink size={12} /> Send Meeting Request Form
             </a>
           </div>
         </motion.div>
