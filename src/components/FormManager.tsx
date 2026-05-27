@@ -271,19 +271,33 @@ function FormEditor({ form, onSave, onCancel }: { form: FormTemplate, onSave: (f
 
           <div className="space-y-4">
             <Reorder.Group axis="y" values={draft.fields} onReorder={handleReorder} className="space-y-4">
-              <AnimatePresence>
+              <AnimatePresence mode="popLayout">
                 {draft.fields.map((field) => (
                   <Reorder.Item 
                     value={field}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
+                    initial={{ opacity: 0, y: -12, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.96, y: 12 }}
+                    whileDrag={{ 
+                      scale: 1.02, 
+                      y: -2,
+                      boxShadow: "0 20px 40px -5px rgba(0,143,213,0.15), 0 10px 20px -6px rgba(0,143,213,0.1)"
+                    }}
+                    whileHover={{ 
+                      y: -1.5,
+                      borderColor: "rgba(0,143,213,0.2)",
+                      boxShadow: "0 8px 20px rgba(11,31,51,0.03)"
+                    }}
+                    transition={{ type: "spring", stiffness: 350, damping: 26 }}
                     key={field.id} 
-                    className="bg-white border text-left border-gray-100 rounded-2xl p-4 flex gap-4 shadow-sm cursor-grab active:cursor-grabbing hover:border-gray-200 transition-colors"
+                    className="bg-white border text-left border-gray-100 rounded-2xl p-4 flex gap-4 shadow-2xs cursor-grab active:cursor-grabbing transition-all select-none"
                   >
-                    <div className="flex flex-col gap-1 items-center justify-center text-gray-300 pt-1">
-                      <GripVertical size={14} className="opacity-50" />
-                    </div>
+                    <motion.div 
+                      whileHover={{ scale: 1.15, text: '#008FD5' }}
+                      className="flex flex-col gap-1 items-center justify-center text-gray-400 pt-1 hover:text-[#008FD5] transition-colors cursor-grab"
+                    >
+                      <GripVertical size={14} className="opacity-70 shrink-0" />
+                    </motion.div>
                     <div className="flex-1 grid grid-cols-12 gap-4 items-center">
                     <div className="col-span-5 flex items-center gap-3">
                       <input 
