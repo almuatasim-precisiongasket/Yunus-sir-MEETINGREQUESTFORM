@@ -10,7 +10,7 @@ import FormManager from './components/FormManager';
 import SettingsView from './components/Settings';
 import { MeetingRequest, RequestStatus } from './types';
 import { motion, AnimatePresence } from 'motion/react';
-import { LayoutDashboard, FileText, Link as LinkIcon, ExternalLink, Settings, LogOut, Check, Lock, ShieldAlert, QrCode, X, MessageCircle } from 'lucide-react';
+import { LayoutDashboard, FileText, Link as LinkIcon, ExternalLink, Settings, LogOut, Check, Lock, ShieldAlert, QrCode, X, MessageCircle, Loader2 } from 'lucide-react';
 import CompanyLogo from './components/CompanyLogo';
 import { QRCodeSVG } from 'qrcode.react';
 import WhatsAppDispatch from './components/WhatsAppDispatch';
@@ -480,51 +480,81 @@ export default function App() {
           </div>
           <div className="hidden md:block"></div>
           <div className="flex items-center gap-3 text-[#008FD5]">
-            {/* Google Calendar Connection Status */}
-            <div className="flex items-center gap-2">
-              {isGoogleLoading ? (
-                <div className="text-xs text-gray-400 font-sans italic">Loading...</div>
-              ) : googleUser ? (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 border border-green-200 rounded-full text-[11px] font-bold select-none font-sans shadow-sm">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse"></span>
-                  <span className="max-w-[120px] md:max-w-none truncate">Connected</span>
-                  <button 
-                    onClick={handleDisconnectGoogle} 
-                    className="text-green-800 hover:text-red-600 ml-1 font-black text-[9px] uppercase tracking-wide cursor-pointer focus:outline-none"
-                    title="Disconnect Google Account"
+            {/* Google Calendar Connection Status with spring cross-fades */}
+            <div className="flex items-center gap-2 h-9">
+              <AnimatePresence mode="wait">
+                {isGoogleLoading ? (
+                  <motion.div 
+                    key="loading"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    className="text-xs text-gray-400 font-sans italic flex items-center gap-1.5"
                   >
-                    <X size={12} />
-                  </button>
-                </div>
-              ) : (
-                <button 
-                  onClick={handleConnectGoogle}
-                  className="flex items-center gap-2 px-4 py-2 bg-white border border-[#D1D5DB] hover:bg-gray-50 rounded-full text-xs font-bold text-[#4B5563] shadow-sm transition-all focus:outline-none cursor-pointer font-sans"
-                  title="Connect Google Calendar to synchronize meeting requests and create Google Meet coordinates automatically."
-                >
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                  </svg>
-                  <span>Connect Calendar</span>
-                </button>
-              )}
+                    <Loader2 size={12} className="animate-spin text-[#008FD5]" />
+                    <span>Loading...</span>
+                  </motion.div>
+                ) : googleUser ? (
+                  <motion.div 
+                    key="connected"
+                    initial={{ opacity: 0, scale: 0.9, y: 5 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: -5 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 border border-green-200 rounded-full text-[11px] font-bold select-none font-sans shadow-sm"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse"></span>
+                    <span className="max-w-[120px] md:max-w-none truncate font-semibold">Connected</span>
+                    <motion.button 
+                      whileTap={{ scale: 0.85 }}
+                      onClick={handleDisconnectGoogle} 
+                      className="text-green-800 hover:text-red-600 ml-1 font-black text-[9px] uppercase tracking-wide cursor-pointer focus:outline-none flex items-center justify-center p-0.5 rounded-full hover:bg-green-100"
+                      title="Disconnect Google Account"
+                    >
+                      <X size={12} />
+                    </motion.button>
+                  </motion.div>
+                ) : (
+                  <motion.button 
+                    key="disconnected"
+                    initial={{ opacity: 0, scale: 0.9, y: 5 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: -5 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleConnectGoogle}
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-[#D1D5DB] hover:bg-gray-50 rounded-full text-xs font-bold text-[#4B5563] shadow-sm transition-all focus:outline-none cursor-pointer font-sans"
+                    title="Connect Google Calendar to synchronize meeting requests and create Google Meet coordinates automatically."
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                    </svg>
+                    <span className="font-semibold">Connect Calendar</span>
+                  </motion.button>
+                )}
+              </AnimatePresence>
             </div>
 
-            <button 
+            <motion.button 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => {
                 handleCopyLink();
                 setIsQrModalOpen(true);
               }} 
-              className="hidden md:flex items-center gap-2 px-5 py-2 bg-[#008FD5]/5 text-[#008FD5] hover:bg-[#008FD5]/10 rounded-full font-black text-xs transition-colors shadow-sm border-2 border-[#008FD5]/30 cursor-pointer"
+              className="hidden md:flex items-center gap-2 px-5 py-2 bg-[#008FD5]/5 text-[#008FD5] hover:bg-[#008FD5]/10 rounded-full font-black text-xs transition-all shadow-sm border-2 border-[#008FD5]/30 cursor-pointer"
               title="Copy intake form link and show QR scanner code"
             >
                 {copied ? <Check size={16} className="text-[#16a34a]" /> : <QrCode size={16} />}
                 <span>{copied ? 'Copied!' : 'Copy Form'}</span>
-            </button>
-            <button 
+            </motion.button>
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => {
                 handleCopyLink();
                 setIsQrModalOpen(true);
@@ -533,35 +563,52 @@ export default function App() {
               title="Copy Form"
             >
                 {copied ? <Check size={20} className="text-[#15803d]" /> : <QrCode size={20} />}
-            </button>
-            <button onClick={handleLogout} className="md:hidden p-2 hover:bg-red-50 text-red-500 rounded-full transition-colors ml-1" title="Sign Out">
+            </motion.button>
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleLogout} 
+              className="md:hidden p-2 hover:bg-red-50 text-red-500 rounded-full transition-colors ml-1" 
+              title="Sign Out"
+            >
                 <LogOut size={20} />
-            </button>
+            </motion.button>
           </div>
         </header>
 
-        {/* Main Canvas */}
-        <main className="flex-1 overflow-y-auto bg-[#F8FAFC] p-margin-mobile md:p-xl lg:p-xxl">
-          {view === 'dashboard' ? (
-            <Dashboard 
-              requests={requests} 
-              onUpdateStatus={updateStatus} 
-              onSeedDemoData={handleSeedDemoData} 
-              onDeleteRequest={handleDeleteRequest} 
-              googleToken={googleToken}
-              onConnectGoogle={handleConnectGoogle}
-              onShareLink={() => {
-                handleCopyLink();
-                setIsQrModalOpen(true);
-              }}
-            />
-          ) : view === 'forms' ? (
-            <FormManager />
-          ) : view === 'dispatch' ? (
-            <WhatsAppDispatch />
-          ) : view === 'settings' ? (
-            <SettingsView />
-          ) : null}
+        {/* Main Canvas with beautiful page transitions */}
+        <main className="flex-1 overflow-y-auto bg-[#F8FAFC] p-margin-mobile md:p-xl lg:p-xxl relative">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={view}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full h-full"
+            >
+              {view === 'dashboard' ? (
+                <Dashboard 
+                  requests={requests} 
+                  onUpdateStatus={updateStatus} 
+                  onSeedDemoData={handleSeedDemoData} 
+                  onDeleteRequest={handleDeleteRequest} 
+                  googleToken={googleToken}
+                  onConnectGoogle={handleConnectGoogle}
+                  onShareLink={() => {
+                    handleCopyLink();
+                    setIsQrModalOpen(true);
+                  }}
+                />
+              ) : view === 'forms' ? (
+                <FormManager />
+              ) : view === 'dispatch' ? (
+                <WhatsAppDispatch />
+              ) : view === 'settings' ? (
+                <SettingsView />
+              ) : null}
+            </motion.div>
+          </AnimatePresence>
         </main>
 
         {/* BottomNavBar (Mobile Only) */}
