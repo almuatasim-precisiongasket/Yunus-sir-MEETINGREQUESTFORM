@@ -284,7 +284,7 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
           <div className="absolute top-10 right-0 w-[400px] h-[400px] bg-[#008FD5]/5 rounded-full blur-[80px] -z-10 translate-x-1/4 -translate-y-1/4 pointer-events-none"></div>
           <div className="absolute bottom-10 left-0 w-[300px] h-[300px] bg-sky-200/5 rounded-full blur-[60px] -z-10 -translate-x-1/4 translate-y-1/4 pointer-events-none"></div>
 
-          <div className="bg-white border border-slate-200/80 rounded-3xl p-8 md:p-12 text-center w-full shadow-xl relative z-10 flex flex-col items-center">
+          <div className="bg-white bg-texture border border-slate-200/80 rounded-3xl p-8 md:p-12 text-center w-full shadow-xl relative z-10 flex flex-col items-center">
             {/* Top Badge / Seal */}
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-emerald-50 mb-6 relative border border-emerald-100 shadow-sm">
                 <motion.div 
@@ -399,7 +399,7 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className="w-full max-w-[840px] bg-white rounded-2xl shadow-ambient border border-slate-200/50 p-lg md:p-xxl mt-lg mb-xxl relative font-sans text-left"
+          className="w-full max-w-[840px] bg-white bg-texture rounded-2xl shadow-ambient border border-slate-200/50 p-lg md:p-xxl mt-lg mb-xxl relative font-sans text-left"
         >
           {isSubmitting && (
             <div className="absolute inset-0 bg-white/70 backdrop-blur-xs z-20 rounded-2xl flex items-center justify-center">
