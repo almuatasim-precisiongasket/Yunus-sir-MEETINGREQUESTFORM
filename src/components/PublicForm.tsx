@@ -992,7 +992,11 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
                   margin: '12px auto 0 auto'
                 }}
               >
-                {template.description || "Welcome to PRECI FORM. Our coordination office securely reviews and manages all incoming executive scheduling requests. Please provide accurate details to help us evaluate and coordinate your meeting efficiently."}
+                <EncryptedText 
+                  text={template.description || "Welcome to PRECI FORM. Our coordination office securely reviews and manages all incoming executive scheduling requests. Please provide accurate details to help us evaluate and coordinate your meeting efficiently."} 
+                  revealDelayMs={12} 
+                  flipDelayMs={25}
+                />
               </p>
             </div>
           </div>
