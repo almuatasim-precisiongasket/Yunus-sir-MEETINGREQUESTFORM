@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, ChevronDown, Send, Loader2, Copy, Check, Calendar, Clock, User, ShieldCheck, Sparkles, CalendarX2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getCalendarAvailability, getSettings, SettingsData } from '../lib/db';
 import { EncryptedText } from './ui/encrypted-text';
+import { DotGrid } from './ui/dot-grid';
 
 interface CustomDatePickerProps {
   value: string;
@@ -793,8 +794,22 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
   };
 
   return (
-    <AnimatePresence mode="wait">
-      {submitted && lastSubmittedReq ? (
+    <div className="relative w-full flex-1 flex flex-col items-center justify-center">
+      {/* Background Interactive Dot Grid */}
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
+        <DotGrid
+          dotSize={12}
+          gap={18}
+          baseColor="#E2E8F0"
+          activeColor="#008FD5"
+          proximity={140}
+          shockRadius={240}
+          shockStrength={4}
+        />
+      </div>
+
+      <AnimatePresence mode="wait">
+        {submitted && lastSubmittedReq ? (
         <motion.div 
            key="success"
            initial={{ opacity: 0, scale: 0.97, y: 15 }}
@@ -1183,5 +1198,6 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
         </motion.div>
       )}
     </AnimatePresence>
+    </div>
   );
 }
