@@ -41,7 +41,13 @@ export default function App() {
 
   // Redirect root `/` or any unknown/undefined routes to `/dashboard` (login page)
   useEffect(() => {
-    const knownRoutes = ['/request', '/dashboard', '/settings', '/forms', '/dispatch'];
+    const knownRoutes = [
+      '/request', '/request/',
+      '/dashboard', '/dashboard/',
+      '/settings', '/settings/',
+      '/forms', '/forms/',
+      '/dispatch', '/dispatch/'
+    ];
     const isDetail = path.startsWith('/request/') && path !== '/request/';
     
     if (path === '/' || path === '' || (!knownRoutes.includes(path) && !isDetail)) {
