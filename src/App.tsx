@@ -139,7 +139,8 @@ export default function App() {
               const matched = forms.find((f: any) => f.id === formId);
               setPublicFormTemplate(matched || forms[0]);
             } else {
-              setPublicFormTemplate(forms[0]);
+              const defaultFormMatch = forms.find((f: any) => f.id === 'form-default');
+              setPublicFormTemplate(defaultFormMatch || forms[0]);
             }
           }
         })

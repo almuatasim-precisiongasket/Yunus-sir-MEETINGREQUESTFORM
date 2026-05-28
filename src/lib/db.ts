@@ -148,6 +148,17 @@ export async function getForms(): Promise<FormTemplate[]> {
     querySnapshot.forEach((doc) => {
       forms.push({ ...doc.data(), id: doc.id } as FormTemplate);
     });
+
+    const firestoreDefault = forms.find(f => f.id === 'form-default');
+    if (firestoreDefault && firestoreDefault.description !== defaultForm.description) {
+      await updateForm('form-default', defaultForm);
+      const idx = forms.findIndex(f => f.id === 'form-default');
+      if (idx !== -1) forms[idx] = defaultForm;
+    } else if (!firestoreDefault) {
+      await addForm(defaultForm);
+      forms.push(defaultForm);
+    }
+
     if (forms.length > 0) {
       return forms.sort((a, b) => a.createdAt - b.createdAt);
     }
