@@ -3,6 +3,7 @@ import { MeetingRequest, FormTemplate, FormField } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, ChevronDown, Send, Loader2, Copy, Check, Calendar, Clock, User, ShieldCheck, Sparkles, CalendarX2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getCalendarAvailability, getSettings, SettingsData } from '../lib/db';
+import { EncryptedText } from './ui/encrypted-text';
 
 interface CustomDatePickerProps {
   value: string;
@@ -968,13 +969,24 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
           <div className="mb-xl border-b border-slate-100 pb-lg relative text-center w-full">
             <div className="space-y-2.5 max-w-2xl mx-auto text-center">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#008FD5]/5 border border-[#008FD5]/15 text-[#008FD5] rounded-lg text-[9px] font-black uppercase tracking-widest select-none">
-                <ShieldCheck size={11} className="stroke-[2.5px]" /> PRECI FORM
+                <ShieldCheck size={11} className="stroke-[2.5px]" />
+                <EncryptedText text="PRECI FORM" revealDelayMs={30} flipDelayMs={35} />
               </div>
-              <h1 className="font-sans text-2xl md:text-3xl font-black text-[#0B1F33] tracking-tight">
-                {template.title}
+              <h1 className="font-sans text-2xl md:text-3xl font-black text-[#0B1F33] tracking-tight min-h-[36px] md:min-h-[40px]">
+                <EncryptedText 
+                  text={template.title} 
+                  revealDelayMs={20} 
+                  flipDelayMs={25}
+                  encryptedClassName="text-slate-400 font-mono"
+                  revealedClassName="text-[#0B1F33]"
+                />
               </h1>
-              <p className="font-sans text-xs md:text-sm text-slate-500 leading-relaxed font-medium mx-auto">
-                Welcome to <span className="font-bold text-[#0B1F33]">PRECI FORM</span>. Our coordination office <span className="font-semibold text-slate-700">securely reviews and manages</span> all incoming executive scheduling requests. Please provide accurate details to help us evaluate and coordinate your meeting efficiently.
+              <p className="font-sans text-xs md:text-sm text-slate-500 leading-relaxed font-medium mx-auto max-w-xl min-h-[48px]">
+                <EncryptedText 
+                  text={template.description || "Welcome to PRECI FORM. Our coordination office securely reviews and manages all incoming executive scheduling requests. Please provide accurate details to help us evaluate and coordinate your meeting efficiently."} 
+                  revealDelayMs={4} 
+                  flipDelayMs={15}
+                />
               </p>
             </div>
           </div>
