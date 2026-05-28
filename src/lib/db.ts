@@ -26,21 +26,20 @@ export const db = getFirestore(app);
 const defaultForm: FormTemplate = {
   id: "form-default",
   title: "Meeting Request Form",
-  description: "Welcome to PRECI FORM. Our office securely reviews and coordinates all incoming executive scheduling requests.",
-  successMessage: "Your executive request has been safely cataloged and is queued for verification.",
+  description: "Welcome to PRECI FORM. Our coordination office securely reviews and manages all incoming executive scheduling requests. Please provide accurate details to help us evaluate and coordinate your meeting efficiently.",
+  successMessage: "Your meeting proposal has been submitted successfully and is now awaiting executive review.",
   createdAt: Date.now(),
   fields: [
-    { id: "fullName", label: "Name", type: "text", required: true, isSystem: true },
-    { id: "email", label: "Email Address", type: "email", required: true, isSystem: true },
-    { id: "company", label: "Company / Organization", type: "text", required: false, isSystem: true },
-    { id: "category", label: "Meeting Category", type: "dropdown", required: true, isSystem: false, options: ["Business", "Legal", "Investment", "Personal", "General", "Other"] },
-    { id: "phoneNumber", label: "Phone Number", type: "phone", required: false, isSystem: false },
-    { id: "preferredDate", label: "Preferred Meeting Date", type: "date", required: true, isSystem: true },
-    { id: "preferredTime", label: "Preferred Meeting Time", type: "time", required: true, isSystem: true },
-    { id: "expectedDuration", label: "Expected Duration", type: "dropdown", required: true, isSystem: true, options: ["15 minutes", "30 minutes", "45 minutes", "1 hour", "1.5 hours", "2+ hours"] },
-    { id: "source", label: "How did you get the contact?", type: "text", required: true, isSystem: false },
-    { id: "purpose", label: "Purpose of Meeting", type: "textarea", required: true, isSystem: true, placeholder: "Briefly describe the purpose of your request or meeting." },
-    { id: "context", label: "Detailed Notes / Context", type: "textarea", required: false, isSystem: false, placeholder: "Optional supporting details, project context, or scheduling considerations" }
+    { id: "fullName", label: "Name", type: "text", required: true, isSystem: true, placeholder: "Enter your full name" },
+    { id: "email", label: "Email Address (optional)", type: "email", required: false, isSystem: true, placeholder: "Our platform detects for whitelisted email and scheduling meeting directly" },
+    { id: "company", label: "Company / Organization (Optional)", type: "text", required: false, isSystem: true, placeholder: "Enter your company, organization, or business name" },
+    { id: "category", label: "Meeting Category", type: "dropdown", required: true, isSystem: false, options: ["General Meeting", "Consultation", "Legal", "Partnership Inquiry", "Business Discussion", "Other"], placeholder: "Select the type of meeting request" },
+    { id: "phoneNumber", label: "Phone Number (Optional)", type: "phone", required: false, isSystem: false, placeholder: "Enter your contact number" },
+    { id: "preferredDate", label: "Meeting Date", type: "date", required: true, isSystem: true, placeholder: "Select your preferred meeting date" },
+    { id: "preferredTime", label: "Meeting Time", type: "time", required: true, isSystem: true, placeholder: "Please select a date first" },
+    { id: "expectedDuration", label: "Duration", type: "dropdown", required: true, isSystem: true, options: ["15 Minutes", "30 Minutes", "45 Minutes", "1 Hour", "2+ Hours"], placeholder: "Select expected meeting duration" },
+    { id: "purpose", label: "Purpose of Meeting", type: "textarea", required: true, isSystem: true, placeholder: "Briefly describe the purpose of your request or meeting" },
+    { id: "context", label: "Detailed Notes / Context (Optional)", type: "textarea", required: false, isSystem: false, placeholder: "Optional supporting details, project context, scheduling considerations, or important background information" }
   ]
 };
 
@@ -157,6 +156,10 @@ export async function getForms(): Promise<FormTemplate[]> {
   }
 
   const localForms = getLocal<FormTemplate[]>('form_templates', [defaultForm]);
+  if (localForms.length > 0 && localForms[0].description !== defaultForm.description) {
+    localForms[0] = defaultForm;
+    setLocal('form_templates', localForms);
+  }
   return localForms;
 }
 
@@ -300,9 +303,8 @@ export async function seedRequests(): Promise<MeetingRequest[]> {
         context: "Met briefly at the Munich Aerospace Expo. We want to discuss specialized manufacturing contracts for our upcoming drone fleet chassis.",
         preferredDate: "2026-06-03",
         preferredTime: "10:30",
-        expectedDuration: "45 minutes",
-        category: "Business",
-        source: "Munich Aerospace Expo"
+        expectedDuration: "45 Minutes",
+        category: "Business Discussion"
       }
     },
     {
@@ -320,9 +322,8 @@ export async function seedRequests(): Promise<MeetingRequest[]> {
         context: "Following up on the preliminary term sheet signed last quarter. Looking to align timeline and corporate governance covenants.",
         preferredDate: "2026-06-05",
         preferredTime: "14:00",
-        expectedDuration: "1 hour",
-        category: "Investment",
-        source: "Direct Referral from Lord Sterling"
+        expectedDuration: "1 Hour",
+        category: "Partnership Inquiry"
       }
     }
   ];

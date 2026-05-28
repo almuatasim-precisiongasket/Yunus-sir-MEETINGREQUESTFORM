@@ -620,6 +620,11 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
         whileHover={{ y: -1.5 }}
       >
         {children}
+        {field.placeholder && !hasError && (
+          <span className="text-[10px] text-slate-400 font-semibold mt-1 pl-1 leading-relaxed">
+            {field.placeholder}
+          </span>
+        )}
         <AnimatePresence>
           {hasError && (
             <motion.span
@@ -1078,12 +1083,11 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
                   disabled={submitState !== 'idle'}
                   layout
                   animate={{
-                    width: submitState === 'idle' ? 'auto' : '48px',
-                    borderRadius: submitState === 'idle' ? '12px' : '9999px',
+                    borderRadius: submitState === 'success' ? '9999px' : '12px',
                     backgroundColor: submitState === 'success' ? '#10b981' : '#008FD5',
                   }}
                   transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-                  className="text-white font-label-md text-xs px-8 py-3.5 flex items-center justify-center gap-2 cursor-pointer focus:outline-none shrink-0 min-w-[48px] h-[48px]"
+                  className="text-white font-label-md text-xs px-8 py-3.5 flex items-center justify-center gap-2 cursor-pointer focus:outline-none shrink-0 h-[48px]"
                   style={{ overflow: 'hidden' }}
                 >
                   <AnimatePresence mode="wait">
@@ -1102,12 +1106,13 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
                     {submitState === 'loading' && (
                       <motion.div 
                         key="loading"
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        className="flex items-center justify-center shrink-0"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="flex items-center gap-2 whitespace-nowrap"
                       >
-                        <Loader2 className="animate-spin text-white" size={18} />
+                        <Loader2 className="animate-spin text-white" size={14} />
+                        <span>Submitting Request...</span>
                       </motion.div>
                     )}
                     {submitState === 'success' && (
