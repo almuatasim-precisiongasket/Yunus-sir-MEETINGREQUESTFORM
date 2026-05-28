@@ -966,26 +966,24 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
               className="h-full bg-gradient-to-r from-[#008FD5] to-sky-400"
             />
           </div>
-          <div className="mb-xl border-b border-slate-100 pb-lg relative text-center w-full block">
-            <div className="space-y-2.5 max-w-2xl mx-auto text-center block w-full">
+          <div className="mb-xl border-b border-slate-100 pb-lg relative text-center w-full">
+            <div className="space-y-2.5 max-w-2xl mx-auto text-center">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#008FD5]/5 border border-[#008FD5]/15 text-[#008FD5] rounded-lg text-[9px] font-black uppercase tracking-widest select-none">
                 <ShieldCheck size={11} className="stroke-[2.5px]" />
                 <EncryptedText text="PRECI FORM" revealDelayMs={70} flipDelayMs={60} />
               </div>
-              <h1 className="w-full block font-sans text-2xl md:text-3xl font-black text-[#0B1F33] tracking-tight min-h-[36px] md:min-h-[40px]">
+              <h1 className="font-sans text-2xl md:text-3xl font-black text-[#0B1F33] tracking-tight">
                 <EncryptedText 
                   text={template.title} 
-                  className="w-full inline-block"
                   revealDelayMs={50} 
                   flipDelayMs={40}
                   encryptedClassName="text-slate-400 font-mono"
                   revealedClassName="text-[#0B1F33]"
                 />
               </h1>
-              <p className="w-full block font-sans text-xs md:text-sm text-slate-500 leading-relaxed font-medium mx-auto max-w-xl min-h-[48px]">
+              <p className="font-sans text-xs md:text-sm text-slate-500 leading-relaxed font-medium mx-auto max-w-xl">
                 <EncryptedText 
                   text={template.description || "Welcome to PRECI FORM. Our coordination office securely reviews and manages all incoming executive scheduling requests. Please provide accurate details to help us evaluate and coordinate your meeting efficiently."} 
-                  className="w-full inline-block"
                   revealDelayMs={12} 
                   flipDelayMs={25}
                 />
