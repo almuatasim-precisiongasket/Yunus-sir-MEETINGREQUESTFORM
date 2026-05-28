@@ -182,7 +182,17 @@ export default function RequestDetail({ requestId, onBackToRequest, onBackToDash
       </div>
 
       {/* Main Glassmorphism Ticket Card */}
-      <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-[0_15px_45px_rgba(11,31,51,0.08)] relative">
+      <motion.div 
+        style={{ transformStyle: "preserve-3d" }}
+        whileHover={{
+          rotateX: 2.5,
+          rotateY: -2.5,
+          scale: 1.005,
+          boxShadow: "0 30px 60px rgba(11,31,51,0.12)"
+        }}
+        transition={{ type: "spring", stiffness: 300, damping: 28, mass: 0.9 }}
+        className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-[0_15px_45px_rgba(11,31,51,0.08)] relative"
+      >
         
         {/* Top styling strip */}
         <div className="h-2 w-full bg-[#0B1F33]" />
@@ -222,8 +232,13 @@ export default function RequestDetail({ requestId, onBackToRequest, onBackToDash
                 animate={{ opacity: 1, scale: 1 }}
                 className="bg-amber-50/70 border border-amber-200 rounded-2xl p-5 flex flex-col sm:flex-row gap-4 items-start select-none"
               >
-                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 border border-amber-200/50 shadow-3xs">
-                  <AlertCircle size={20} className="animate-pulse" />
+                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 border border-amber-200/50 shadow-3xs relative">
+                  <AlertCircle size={20} className="relative z-10 animate-pulse" />
+                  <motion.span 
+                    animate={{ scale: [1, 1.35, 1], opacity: [0.2, 0.6, 0.2] }} 
+                    transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }} 
+                    className="absolute inset-0 rounded-xl bg-amber-400 pointer-events-none" 
+                  />
                 </div>
                 <div className="space-y-1">
                   <h3 className="text-xs font-black text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
@@ -245,8 +260,13 @@ export default function RequestDetail({ requestId, onBackToRequest, onBackToDash
                 className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-5 flex flex-col gap-4.5"
               >
                 <div className="flex flex-col sm:flex-row gap-4 items-start select-none">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-200/50 shadow-3xs">
-                    <ShieldCheck size={20} />
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-200/50 shadow-3xs relative">
+                    <ShieldCheck size={20} className="relative z-10" />
+                    <motion.span 
+                      animate={{ scale: [1, 1.35, 1], opacity: [0.15, 0.45, 0.15] }} 
+                      transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }} 
+                      className="absolute inset-0 rounded-xl bg-emerald-400 pointer-events-none" 
+                    />
                   </div>
                   <div className="space-y-1">
                     <h3 className="text-xs font-black text-emerald-950 uppercase tracking-wider flex items-center gap-1.5">
@@ -264,7 +284,15 @@ export default function RequestDetail({ requestId, onBackToRequest, onBackToDash
                   {countdownText && (
                     <div className="bg-white/80 border border-emerald-200/50 rounded-xl p-3 flex flex-col justify-center">
                       <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider select-none">Timeline Countdown</span>
-                      <span className="text-[11px] font-bold text-slate-800 mt-0.5">{countdownText}</span>
+                      <motion.span 
+                        key={countdownText}
+                        initial={{ scale: 0.98, opacity: 0.8 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.2, type: "spring", stiffness: 300, damping: 20 }}
+                        className="text-[11px] font-bold text-slate-800 mt-0.5 inline-block"
+                      >
+                        {countdownText}
+                      </motion.span>
                     </div>
                   )}
                   {request.meetLink && (
@@ -410,7 +438,7 @@ export default function RequestDetail({ requestId, onBackToRequest, onBackToDash
           </div>
         </div>
 
-      </div>
+      </motion.div>
 
       {/* Operations Help Box */}
       <div className="mt-6 bg-[#F8FAFC] border border-slate-200/60 rounded-2xl p-5 flex items-center justify-between gap-4 font-sans select-none">

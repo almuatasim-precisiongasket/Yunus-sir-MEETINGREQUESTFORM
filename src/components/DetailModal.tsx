@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MeetingRequest, RequestStatus } from '../types';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { X, Calendar, Clock, Building2, Phone, AlertTriangle, ChevronDown, Trash2, Video, ExternalLink, Loader2 } from 'lucide-react';
 import { findExistingCalendarEvent, syncToGoogleCalendar } from '../lib/googleCalendar';
 import { getForms, updateRequestLinks } from '../lib/db';
@@ -68,10 +68,11 @@ export default function DetailModal({ request, onClose, onUpdateStatus, onDelete
 
   return (
     <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-inverse-surface/30 backdrop-blur-sm z-50 flex items-center justify-center p-md"
+      initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
+      animate={{ opacity: 1, backdropFilter: "blur(8px)" }}
+      exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
+      transition={{ duration: 0.3 }}
+      className="fixed inset-0 bg-inverse-surface/30 z-50 flex items-center justify-center p-md"
     >
        <motion.div 
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -275,36 +276,50 @@ export default function DetailModal({ request, onClose, onUpdateStatus, onDelete
 
           <div className="px-4 py-3 md:px-6 md:py-4 border-t border-gray-100 bg-gray-50/35 flex flex-row items-center justify-end gap-2 shrink-0">
              {onDelete && (
-                <div className="mr-auto flex items-center gap-1">
-                   {isConfirming ? (
-                      <>
-                         <button 
-                           onClick={() => {
-                              onDelete();
-                              onClose();
-                           }} 
-                           className="px-2.5 py-1.5 font-bold text-xs bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors flex items-center gap-1 shadow-xs"
+                <div className="mr-auto flex items-center gap-1 overflow-hidden min-h-[36px]">
+                   <AnimatePresence mode="wait">
+                      {isConfirming ? (
+                         <motion.div 
+                           key="confirm-group"
+                           initial={{ opacity: 0, x: -15 }}
+                           animate={{ opacity: 1, x: 0 }}
+                           exit={{ opacity: 0, x: 15 }}
+                           transition={{ type: "spring", stiffness: 420, damping: 19, mass: 0.7 }}
+                           className="flex items-center gap-1"
+                         >
+                            <button 
+                              onClick={() => {
+                                 onDelete();
+                                 onClose();
+                              }} 
+                              className="px-2.5 py-1.5 font-bold text-xs bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors flex items-center gap-1 shadow-xs cursor-pointer"
+                            >
+                               <Trash2 size={13} />
+                               <span>Confirm Delete?</span>
+                            </button>
+                            <button 
+                              onClick={() => setIsConfirming(false)} 
+                              className="px-2.5 py-1.5 text-xs text-gray-500 hover:text-gray-700 font-medium transition-colors cursor-pointer"
+                            >
+                               Cancel
+                            </button>
+                         </motion.div>
+                      ) : (
+                         <motion.button 
+                           key="delete-btn"
+                           initial={{ opacity: 0, x: -10 }}
+                           animate={{ opacity: 1, x: 0 }}
+                           exit={{ opacity: 0, x: 10 }}
+                           transition={{ type: "spring", stiffness: 420, damping: 19, mass: 0.7 }}
+                           onClick={() => setIsConfirming(true)} 
+                           className="px-3 py-1.5 font-medium text-xs text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-1 border border-transparent hover:border-red-100 cursor-pointer"
+                           title="Permanently delete request"
                          >
                             <Trash2 size={13} />
-                            <span>Confirm Delete?</span>
-                         </button>
-                         <button 
-                           onClick={() => setIsConfirming(false)} 
-                           className="px-2.5 py-1.5 text-xs text-gray-500 hover:text-gray-700 font-medium transition-colors"
-                         >
-                            Cancel
-                         </button>
-                      </>
-                   ) : (
-                      <button 
-                        onClick={() => setIsConfirming(true)} 
-                        className="px-3 py-1.5 font-medium text-xs text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-1 border border-transparent hover:border-red-100"
-                        title="Permanently delete request"
-                      >
-                         <Trash2 size={13} />
-                         <span className="hidden sm:inline">Delete</span>
-                      </button>
-                   )}
+                            <span className="hidden sm:inline">Delete</span>
+                         </motion.button>
+                      )}
+                   </AnimatePresence>
                 </div>
              )}
              <button onClick={onClose} className="px-4 py-1.5 font-medium text-xs text-gray-600 hover:text-gray-900 bg-transparent border border-gray-300 rounded-lg transition-colors">

@@ -4,6 +4,33 @@ import { motion, AnimatePresence } from 'motion/react';
 import { getSettings, saveSettings, getGoogleCredentials, saveGoogleCredentials, BlackoutDate, SettingsData } from '../lib/db';
 import { exchangeCodeForRefreshToken, getOrRefreshGoogleToken } from '../lib/googleOAuthRefresh';
 
+interface ToggleProps {
+  checked: boolean;
+  onChange: (val: boolean) => void;
+}
+
+function IOSToggle({ checked, onChange }: ToggleProps) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className={`w-10 h-6 rounded-full p-0.5 flex items-center transition-colors duration-200 focus:outline-none relative shrink-0 cursor-pointer ${
+        checked ? 'bg-[#008FD5]' : 'bg-slate-200'
+      }`}
+    >
+      <motion.div
+        layout
+        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+        className="w-5 h-5 bg-white rounded-full shadow-md"
+        style={{
+          marginLeft: checked ? 'auto' : '0px',
+          marginRight: checked ? '0px' : 'auto'
+        }}
+      />
+    </button>
+  );
+}
+
 interface SettingsProps {
   onLinkSuccess?: (token: string) => void;
   onUnlink?: () => void;
@@ -404,31 +431,33 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
                       <p className="text-[10px] text-gray-500 mt-0.5">Receive structured request summaries via Gmail.</p>
                     </div>
                   </div>
-                  <input
-                    type="checkbox"
+                  <IOSToggle
                     checked={settings.emailAlertsEnabled}
-                    onChange={e => setSettings({...settings, emailAlertsEnabled: e.target.checked})}
-                    className="w-4 h-4 text-[#008FD5] rounded border-gray-300 focus:ring-[#008FD5] cursor-pointer"
+                    onChange={val => setSettings({...settings, emailAlertsEnabled: val})}
                   />
                 </div>
 
-                {settings.emailAlertsEnabled && (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                    animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
-                    className="space-y-1.5 overflow-hidden"
-                  >
-                    <label className="block text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">Admin Notification Email</label>
-                    <input
-                      type="email"
-                      required
-                      placeholder="e.g. admin@precisiongasket.com"
-                      value={settings.adminEmail}
-                      onChange={e => setSettings({...settings, adminEmail: e.target.value})}
-                      className="w-full bg-white border border-[#E5E7EB] text-[#111827] rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-[#008FD5] transition-all"
-                    />
-                  </motion.div>
-                )}
+                <AnimatePresence>
+                  {settings.emailAlertsEnabled && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                      animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
+                      exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 28, mass: 0.9 }}
+                      className="space-y-1.5 overflow-hidden"
+                    >
+                      <label className="block text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">Admin Notification Email</label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="e.g. admin@precisiongasket.com"
+                        value={settings.adminEmail}
+                        onChange={e => setSettings({...settings, adminEmail: e.target.value})}
+                        className="w-full bg-white border border-[#E5E7EB] text-[#111827] rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-[#008FD5] transition-all"
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* Channel 2: WhatsApp / SMS Alert */}
@@ -447,31 +476,33 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
                       <p className="text-[10px] text-gray-500 mt-0.5">Logs instant scheduling alerts in your dispatch queue.</p>
                     </div>
                   </div>
-                  <input
-                    type="checkbox"
+                  <IOSToggle
                     checked={settings.whatsappAlertsEnabled}
-                    onChange={e => setSettings({...settings, whatsappAlertsEnabled: e.target.checked})}
-                    className="w-4 h-4 text-[#008FD5] rounded border-gray-300 focus:ring-[#008FD5] cursor-pointer"
+                    onChange={val => setSettings({...settings, whatsappAlertsEnabled: val})}
                   />
                 </div>
 
-                {settings.whatsappAlertsEnabled && (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                    animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
-                    className="space-y-1.5 overflow-hidden"
-                  >
-                    <label className="block text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">Admin Notification Phone</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. +1 (555) 123-4567"
-                      value={settings.adminPhone}
-                      onChange={e => setSettings({...settings, adminPhone: e.target.value})}
-                      className="w-full bg-white border border-[#E5E7EB] text-[#111827] rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-[#008FD5] transition-all"
-                    />
-                  </motion.div>
-                )}
+                <AnimatePresence>
+                  {settings.whatsappAlertsEnabled && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                      animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
+                      exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 28, mass: 0.9 }}
+                      className="space-y-1.5 overflow-hidden"
+                    >
+                      <label className="block text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">Admin Notification Phone</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. +1 (555) 123-4567"
+                        value={settings.adminPhone}
+                        onChange={e => setSettings({...settings, adminPhone: e.target.value})}
+                        className="w-full bg-white border border-[#E5E7EB] text-[#111827] rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-[#008FD5] transition-all"
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </div>
@@ -498,27 +529,57 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
             <Key size={18} className="text-[#008FD5]" />
             <h2 className="font-bold text-[#0B1F33]">Permanent Google API Sync</h2>
           </div>
-          <div>
-            {connectionStatus === 'unlinked' && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-100 animate-pulse">
-                <AlertCircle size={14} /> Ephemeral (Popups Required)
-              </span>
-            )}
-            {connectionStatus === 'validating' && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-100 animate-pulse">
-                <RefreshCw size={14} className="animate-spin" /> Verifying Sync Health...
-              </span>
-            )}
-            {connectionStatus === 'linked_valid' && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                <ShieldCheck size={14} /> Connected Always
-              </span>
-            )}
-            {connectionStatus === 'linked_expired' && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-100 animate-bounce">
-                <AlertCircle size={14} /> Re-Authorization Required
-              </span>
-            )}
+          <div className="min-h-[30px] flex items-center justify-end">
+            <AnimatePresence mode="wait">
+              {connectionStatus === 'unlinked' && (
+                <motion.span 
+                  key="unlinked"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-100 select-none"
+                >
+                  <AlertCircle size={14} className="animate-pulse" /> Ephemeral (Popups Required)
+                </motion.span>
+              )}
+              {connectionStatus === 'validating' && (
+                <motion.span 
+                  key="validating"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-100 select-none"
+                >
+                  <RefreshCw size={14} className="animate-spin text-[#008FD5]" /> Verifying Sync Health...
+                </motion.span>
+              )}
+              {connectionStatus === 'linked_valid' && (
+                <motion.span 
+                  key="linked_valid"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100 select-none"
+                >
+                  <ShieldCheck size={14} /> Connected Always
+                </motion.span>
+              )}
+              {connectionStatus === 'linked_expired' && (
+                <motion.span 
+                  key="linked_expired"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-100 select-none"
+                >
+                  <AlertCircle size={14} className="animate-bounce" /> Re-Authorization Required
+                </motion.span>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 

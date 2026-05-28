@@ -28,6 +28,29 @@ const DEFAULT_TEMPLATES: Template[] = [
   }
 ];
 
+function TypingIndicator() {
+  const dotVariants = {
+    bounce: {
+      y: ["0%", "-50%", "0%"],
+      transition: {
+        duration: 0.6,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-1 bg-[#d9fdd3] p-3 py-3.5 px-4 rounded-xl rounded-tr-none shadow-sm max-w-[85px] border border-[#d1f4cb]/30 relative text-slate-500 select-none">
+      <motion.div animate="bounce" variants={dotVariants} className="w-1.5 h-1.5 bg-[#667781] rounded-full" />
+      <motion.div animate="bounce" variants={dotVariants} transition={{ delay: 0.15 }} className="w-1.5 h-1.5 bg-[#667781] rounded-full" />
+      <motion.div animate="bounce" variants={dotVariants} transition={{ delay: 0.3 }} className="w-1.5 h-1.5 bg-[#667781] rounded-full" />
+      {/* Bubble Pointer Tail */}
+      <div className="absolute right-0 top-0 w-2.5 h-2.5 bg-[#d9fdd3] rotate-45 transform translate-x-1/2 -translate-y-1/3 rounded-tr-xs shadow-[1.5px_-1.5px_1px_-0.5px_rgba(0,0,0,0.04)]"></div>
+    </div>
+  );
+}
+
 export default function WhatsAppDispatch() {
   const [templates, setTemplates] = useState<Template[]>(() => {
     const saved = localStorage.getItem('whatsapp_templates');
@@ -52,6 +75,14 @@ export default function WhatsAppDispatch() {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editBody, setEditBody] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+
+  // Trigger simulated typing dot animations
+  useEffect(() => {
+    setIsTyping(true);
+    const timer = setTimeout(() => setIsTyping(false), 500);
+    return () => clearTimeout(timer);
+  }, [selectedTemplate.id, selectedRequestId]);
 
   // 1. Fetch available templates and database requests on mount
   useEffect(() => {
@@ -495,29 +526,43 @@ export default function WhatsAppDispatch() {
                        </div>
                      </div>
 
-                     {/* Chat Messages area */}
-                     <div className="flex-1 p-4 overflow-y-auto flex flex-col justify-end relative z-10">
-                       <div className="flex flex-col gap-2 items-end">
-                         {/* Chat Bubble with spring slide */}
-                         <motion.div 
-                           key={selectedTemplate.id + recipientName}
-                           initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                           animate={{ opacity: 1, scale: 1, y: 0 }}
-                           transition={{ type: "spring", stiffness: 220, damping: 22 }}
-                           className="relative max-w-[85%] bg-[#d9fdd3] text-slate-800 p-3 rounded-xl rounded-tr-none shadow-[0_1.5px_2.5px_rgba(11,31,51,0.06)] border border-[#d1f4cb]/30 text-xs leading-relaxed select-text whitespace-pre-wrap text-left font-sans"
-                         >
-                           {getPreviewText()}
-                           
-                           {/* Bubble Pointer Tail */}
-                           <div className="absolute right-0 top-0 w-2.5 h-2.5 bg-[#d9fdd3] rotate-45 transform translate-x-1/2 -translate-y-1/3 rounded-tr-xs shadow-[1.5px_-1.5px_1px_-0.5px_rgba(0,0,0,0.04)]"></div>
-                           
-                           <div className="flex items-center justify-end gap-1 mt-2 text-[9px] text-[#667781] font-semibold text-right">
-                             <span>12:00 PM</span>
-                             <CheckCheck size={13} className="text-[#53bdeb] ml-0.5" />
-                           </div>
-                         </motion.div>
-                       </div>
-                     </div>
+                      {/* Chat Messages area */}
+                      <div className="flex-1 p-4 overflow-y-auto flex flex-col justify-end relative z-10">
+                        <div className="flex flex-col gap-2 items-end">
+                          <AnimatePresence mode="wait">
+                            {isTyping ? (
+                              <motion.div
+                                key="typing"
+                                initial={{ opacity: 0, scale: 0.9, y: 5 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: -5 }}
+                                transition={{ duration: 0.15 }}
+                              >
+                                <TypingIndicator />
+                              </motion.div>
+                            ) : (
+                              /* Chat Bubble with spring slide */
+                              <motion.div 
+                                key={selectedTemplate.id + recipientName}
+                                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                transition={{ type: "spring", stiffness: 220, damping: 22 }}
+                                className="relative max-w-[85%] bg-[#d9fdd3] text-slate-800 p-3 rounded-xl rounded-tr-none shadow-[0_1.5px_2.5px_rgba(11,31,51,0.06)] border border-[#d1f4cb]/30 text-xs leading-relaxed select-text whitespace-pre-wrap text-left font-sans"
+                              >
+                                {getPreviewText()}
+                                
+                                {/* Bubble Pointer Tail */}
+                                <div className="absolute right-0 top-0 w-2.5 h-2.5 bg-[#d9fdd3] rotate-45 transform translate-x-1/2 -translate-y-1/3 rounded-tr-xs shadow-[1.5px_-1.5px_1px_-0.5px_rgba(0,0,0,0.04)]"></div>
+                                
+                                <div className="flex items-center justify-end gap-1 mt-2 text-[9px] text-[#667781] font-semibold text-right">
+                                  <span>12:00 PM</span>
+                                  <CheckCheck size={13} className="text-[#53bdeb] ml-0.5" />
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </div>
                    </div>
 
                  </div>

@@ -71,6 +71,9 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [passcode, setPasscode] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [hoveredPath, setHoveredPath] = useState<string | null>(null);
+  const [isShaking, setIsShaking] = useState(false);
+
 
   const [googleUser, setGoogleUser] = useState<User | null>(null);
   const [googleToken, setGoogleToken] = useState<string | null>(null);
@@ -354,6 +357,8 @@ export default function App() {
       }
     } else {
       setLoginError('Invalid passcode. Access Denied.');
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 500);
     }
   };
 
@@ -423,7 +428,7 @@ export default function App() {
 
           <motion.div 
             initial="hidden"
-            animate="visible"
+            animate={isShaking ? { x: [-10, 10, -8, 8, -4, 4, 0], transition: { duration: 0.4 } } : "visible"}
             variants={{
               hidden: { opacity: 0, y: 35, scale: 0.97 },
               visible: {
@@ -652,27 +657,97 @@ export default function App() {
         
         <div className="flex flex-col gap-2 flex-1 px-2">
           <div className="font-label-sm text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-2 px-2">Menu</div>
-          <button onClick={() => navigate('/dashboard')} className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 w-full text-left relative overflow-hidden ${path === '/dashboard' ? 'bg-[#008FD5]/10 text-[#008FD5]' : 'text-[#6B7280] hover:bg-gray-50'}`}>
-            {path === '/dashboard' && <motion.div layoutId="active-indicator" className="absolute left-0 top-0 bottom-0 w-1 bg-[#008FD5] rounded-r-full" />}
+          
+          <button 
+            onClick={() => navigate('/dashboard')} 
+            onMouseEnter={() => setHoveredPath('/dashboard')}
+            onMouseLeave={() => setHoveredPath(null)}
+            className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 w-full text-left relative overflow-hidden ${path === '/dashboard' ? 'text-[#008FD5]' : 'text-[#6B7280]'}`}
+          >
+            {path === '/dashboard' ? (
+              <motion.div 
+                layoutId="active-indicator" 
+                className="absolute inset-0 bg-[#008FD5]/10 border-l-[3px] border-[#008FD5] rounded-xl -z-10" 
+                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+              />
+            ) : hoveredPath === '/dashboard' ? (
+              <motion.div 
+                layoutId="hover-indicator" 
+                className="absolute inset-0 bg-slate-50/80 rounded-xl -z-10" 
+                transition={{ type: "spring", stiffness: 350, damping: 28 }}
+              />
+            ) : null}
             <LayoutDashboard size={20} className={path === '/dashboard' ? 'text-[#008FD5] relative z-10' : 'relative z-10'} />
             <span className="font-label-md text-label-md relative z-10">Requests</span>
           </button>
           
-          <button onClick={() => navigate('/forms')} className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 w-full text-left relative overflow-hidden ${path === '/forms' ? 'bg-[#008FD5]/10 text-[#008FD5]' : 'text-[#6B7280] hover:bg-gray-50'}`}>
-            {path === '/forms' && <motion.div layoutId="active-indicator" className="absolute left-0 top-0 bottom-0 w-1 bg-[#008FD5] rounded-r-full" />}
+          <button 
+            onClick={() => navigate('/forms')} 
+            onMouseEnter={() => setHoveredPath('/forms')}
+            onMouseLeave={() => setHoveredPath(null)}
+            className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 w-full text-left relative overflow-hidden ${path === '/forms' ? 'text-[#008FD5]' : 'text-[#6B7280]'}`}
+          >
+            {path === '/forms' ? (
+              <motion.div 
+                layoutId="active-indicator" 
+                className="absolute inset-0 bg-[#008FD5]/10 border-l-[3px] border-[#008FD5] rounded-xl -z-10" 
+                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+              />
+            ) : hoveredPath === '/forms' ? (
+              <motion.div 
+                layoutId="hover-indicator" 
+                className="absolute inset-0 bg-slate-50/80 rounded-xl -z-10" 
+                transition={{ type: "spring", stiffness: 350, damping: 28 }}
+              />
+            ) : null}
             <FileText size={20} className={path === '/forms' ? 'text-[#008FD5] relative z-10' : 'relative z-10'} />
             <span className="font-label-md text-label-md relative z-10">Form Creator</span>
           </button>
           
-          <button onClick={() => navigate('/dispatch')} className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 w-full text-left relative overflow-hidden ${path === '/dispatch' ? 'bg-[#008FD5]/10 text-[#008FD5]' : 'text-[#6B7280] hover:bg-gray-50'}`}>
-            {path === '/dispatch' && <motion.div layoutId="active-indicator" className="absolute left-0 top-0 bottom-0 w-1 bg-[#008FD5] rounded-r-full" />}
+          <button 
+            onClick={() => navigate('/dispatch')} 
+            onMouseEnter={() => setHoveredPath('/dispatch')}
+            onMouseLeave={() => setHoveredPath(null)}
+            className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 w-full text-left relative overflow-hidden ${path === '/dispatch' ? 'text-[#008FD5]' : 'text-[#6B7280]'}`}
+          >
+            {path === '/dispatch' ? (
+              <motion.div 
+                layoutId="active-indicator" 
+                className="absolute inset-0 bg-[#008FD5]/10 border-l-[3px] border-[#008FD5] rounded-xl -z-10" 
+                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+              />
+            ) : hoveredPath === '/dispatch' ? (
+              <motion.div 
+                layoutId="hover-indicator" 
+                className="absolute inset-0 bg-slate-50/80 rounded-xl -z-10" 
+                transition={{ type: "spring", stiffness: 350, damping: 28 }}
+              />
+            ) : null}
             <MessageCircle size={20} className={path === '/dispatch' ? 'text-[#008FD5] relative z-10' : 'relative z-10'} />
             <span className="font-label-md text-label-md relative z-10">WhatsApp</span>
           </button>
           
           <div className="font-label-sm text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-2 px-2 mt-8">System</div>
-          <button onClick={() => navigate('/settings')} className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 w-full text-left relative overflow-hidden ${path === '/settings' ? 'bg-[#008FD5]/10 text-[#008FD5]' : 'text-[#6B7280] hover:bg-gray-50'}`}>
-            {path === '/settings' && <motion.div layoutId="active-indicator" className="absolute left-0 top-0 bottom-0 w-1 bg-[#008FD5] rounded-r-full" />}
+          
+          <button 
+            onClick={() => navigate('/settings')} 
+            onMouseEnter={() => setHoveredPath('/settings')}
+            onMouseLeave={() => setHoveredPath(null)}
+            className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 w-full text-left relative overflow-hidden ${path === '/settings' ? 'text-[#008FD5]' : 'text-[#6B7280]'}`}
+          >
+            {path === '/settings' ? (
+              <motion.div 
+                layoutId="active-indicator" 
+                className="absolute inset-0 bg-[#008FD5]/10 border-l-[3px] border-[#008FD5] rounded-xl -z-10" 
+                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+              />
+            ) : hoveredPath === '/settings' ? (
+              <motion.div 
+                layoutId="hover-indicator" 
+                className="absolute inset-0 bg-slate-50/80 rounded-xl -z-10" 
+                transition={{ type: "spring", stiffness: 350, damping: 28 }}
+              />
+            ) : null}
             <Settings size={20} className={path === '/settings' ? 'text-[#008FD5] relative z-10' : 'relative z-10'} />
             <span className="font-label-md text-label-md relative z-10">Settings</span>
           </button>
@@ -847,22 +922,49 @@ export default function App() {
         {/* BottomNavBar (Mobile Only) */}
         <nav className="md:hidden fixed bottom-0 w-full flex justify-around items-center px-2 py-2 pb-safe bg-white/95 backdrop-blur-md shadow-lg border-t border-[#E5E7EB] z-50">
           <button onClick={() => navigate('/dashboard')} className={`flex flex-col flex-1 items-center justify-center transition-transform duration-100 py-2 relative ${path === '/dashboard' ? 'text-[#008FD5]' : 'text-[#6B7280]'}`}>
-            {path === '/dashboard' && <div className="absolute top-0 w-12 h-1 bg-[#008FD5] rounded-full"></div>}
+            {path === '/dashboard' && (
+              <motion.div 
+                layoutId="active-indicator-mobile" 
+                className="absolute top-0 w-12 h-1 bg-[#008FD5] rounded-full"
+                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+              />
+            )}
             <LayoutDashboard size={24} className="mb-1 mt-1" />
             <span className="font-label-sm text-[11px] font-medium">Dashboard</span>
           </button>
+          
           <button onClick={() => navigate('/forms')} className={`flex flex-col flex-1 items-center justify-center transition-colors py-2 relative ${path === '/forms' ? 'text-[#008FD5]' : 'text-[#6B7280]'}`}>
-            {path === '/forms' && <div className="absolute top-0 w-12 h-1 bg-[#008FD5] rounded-full"></div>}
+            {path === '/forms' && (
+              <motion.div 
+                layoutId="active-indicator-mobile" 
+                className="absolute top-0 w-12 h-1 bg-[#008FD5] rounded-full"
+                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+              />
+            )}
             <FileText size={24} className="mb-1 mt-1" />
             <span className="font-label-sm text-[11px]">Form Creator</span>
           </button>
+          
           <button onClick={() => navigate('/dispatch')} className={`flex flex-col flex-1 items-center justify-center transition-colors py-2 relative ${path === '/dispatch' ? 'text-[#008FD5]' : 'text-[#6B7280]'}`}>
-            {path === '/dispatch' && <div className="absolute top-0 w-12 h-1 bg-[#008FD5] rounded-full"></div>}
+            {path === '/dispatch' && (
+              <motion.div 
+                layoutId="active-indicator-mobile" 
+                className="absolute top-0 w-12 h-1 bg-[#008FD5] rounded-full"
+                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+              />
+            )}
             <MessageCircle size={24} className="mb-1 mt-1" />
             <span className="font-label-sm text-[11px]">WhatsApp</span>
           </button>
+          
           <button onClick={() => navigate('/settings')} className={`flex flex-col flex-1 items-center justify-center transition-colors py-2 relative ${path === '/settings' ? 'text-[#008FD5]' : 'text-[#6B7280]'}`}>
-            {path === '/settings' && <div className="absolute top-0 w-12 h-1 bg-[#008FD5] rounded-full"></div>}
+            {path === '/settings' && (
+              <motion.div 
+                layoutId="active-indicator-mobile" 
+                className="absolute top-0 w-12 h-1 bg-[#008FD5] rounded-full"
+                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+              />
+            )}
             <Settings size={24} className="mb-1 mt-1" />
             <span className="font-label-sm text-[11px]">Settings</span>
           </button>

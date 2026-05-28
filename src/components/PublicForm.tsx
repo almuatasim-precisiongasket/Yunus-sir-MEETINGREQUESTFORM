@@ -50,11 +50,15 @@ function CustomDatePicker({ value, onChange, hasError, blackoutDates = [] }: Cus
   // First day of month (0-6)
   const firstDayIndex = new Date(year, month, 1).getDay();
 
+  const [direction, setDirection] = useState(0);
+
   const handlePrevMonth = () => {
+    setDirection(-1);
     setCurrentDate(new Date(year, month - 1, 1));
   };
 
   const handleNextMonth = () => {
+    setDirection(1);
     setCurrentDate(new Date(year, month + 1, 1));
   };
 
@@ -168,53 +172,219 @@ function CustomDatePicker({ value, onChange, hasError, blackoutDates = [] }: Cus
               ))}
             </div>
 
-            {/* Days Grid */}
-            <div className="grid grid-cols-7 gap-1 text-center font-sans">
-              {/* Empty cells for leading offset */}
-              {Array.from({ length: firstDayIndex }).map((_, idx) => (
-                <span key={`empty-${idx}`} className="h-7 w-7 flex items-center justify-center"></span>
-              ))}
+            {/* Days Grid masked container */}
+            <div className="overflow-hidden relative w-full min-h-[170px]">
+              <AnimatePresence initial={false} custom={direction} mode="popLayout">
+                <motion.div
+                  key={`${year}-${month}`}
+                  custom={direction}
+                  variants={{
+                    enter: (dir: number) => ({ x: dir > 0 ? 100 : -100, opacity: 0 }),
+                    center: { x: 0, opacity: 1 },
+                    exit: (dir: number) => ({ x: dir > 0 ? -100 : 100, opacity: 0 })
+                  }}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ type: "spring", stiffness: 350, damping: 28 }}
+                  className="grid grid-cols-7 gap-1 text-center font-sans w-full"
+                >
+                  {/* Empty cells for leading offset */}
+                  {Array.from({ length: firstDayIndex }).map((_, idx) => (
+                    <span key={`empty-${idx}`} className="h-7 w-7 flex items-center justify-center"></span>
+                  ))}
 
-              {/* Real Day cells */}
-              {days.map(({ day, isPast, isSelected, isToday, isBlackout, blackoutLabel }) => {
-                const isDisabled = isPast || isBlackout;
-                return (
-                  <button
-                    key={day}
-                    type="button"
-                    disabled={isDisabled}
-                    onClick={() => handleSelectDay(day)}
-                    title={isBlackout ? `Holiday/Blackout: ${blackoutLabel}` : undefined}
-                    className={`h-7 w-7 rounded-lg text-xs font-bold flex items-center justify-center relative cursor-pointer transition-all duration-150 select-none ${
-                      isDisabled 
-                        ? isBlackout
-                          ? 'text-rose-400 bg-rose-50/40 border border-rose-100/30 cursor-not-allowed font-semibold'
-                          : 'text-slate-200 cursor-not-allowed font-medium' 
-                        : isSelected 
-                        ? 'text-white font-black' 
-                        : isToday 
-                        ? 'text-[#008FD5] bg-sky-50/70 border border-sky-100/50' 
-                        : 'text-slate-700 hover:bg-slate-50 hover:text-[#008FD5]'
-                    }`}
-                  >
-                    {isSelected && (
-                      <motion.div 
-                        layoutId="active-date-pill"
-                        className="absolute inset-0 bg-[#008FD5] rounded-lg -z-10 shadow-sm shadow-blue-500/20"
-                        transition={{ type: "spring", stiffness: 380, damping: 28 }}
-                      />
-                    )}
-                    <span>{day}</span>
-                    {isBlackout && (
-                      <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-rose-400 rounded-full" />
-                    )}
-                  </button>
-                );
-              })}
+                  {/* Real Day cells */}
+                  {days.map(({ day, isPast, isSelected, isToday, isBlackout, blackoutLabel }) => {
+                    const isDisabled = isPast || isBlackout;
+                    return (
+                      <button
+                        key={day}
+                        type="button"
+                        disabled={isDisabled}
+                        onClick={() => handleSelectDay(day)}
+                        title={isBlackout ? `Holiday/Blackout: ${blackoutLabel}` : undefined}
+                        className={`h-7 w-7 rounded-lg text-xs font-bold flex items-center justify-center relative cursor-pointer transition-all duration-150 select-none ${
+                          isDisabled 
+                            ? isBlackout
+                              ? 'text-rose-400 bg-rose-50/40 border border-rose-100/30 cursor-not-allowed font-semibold'
+                              : 'text-slate-200 cursor-not-allowed font-medium' 
+                            : isSelected 
+                            ? 'text-white font-black' 
+                            : isToday 
+                            ? 'text-[#008FD5] bg-sky-50/70 border border-sky-100/50' 
+                            : 'text-slate-700 hover:bg-slate-50 hover:text-[#008FD5]'
+                        }`}
+                      >
+                        {isSelected && (
+                          <motion.div 
+                            layoutId="active-date-pill"
+                            className="absolute inset-0 bg-[#008FD5] rounded-lg -z-10 shadow-sm shadow-blue-500/20"
+                            transition={{ type: "spring", stiffness: 380, damping: 28 }}
+                          />
+                        )}
+                        <span>{day}</span>
+                        {isBlackout && (
+                          <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-rose-400 rounded-full" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </motion.div>
+              </AnimatePresence>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+interface FloatingInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+  hasError: boolean;
+  required?: boolean;
+  value?: string;
+  type?: string;
+  onChange?: React.ChangeEventHandler<HTMLInputElement>;
+  onFocus?: React.FocusEventHandler<HTMLInputElement>;
+  onBlur?: React.FocusEventHandler<HTMLInputElement>;
+}
+
+function FloatingInput({ label, hasError, required, value, onFocus, onBlur, ...props }: FloatingInputProps) {
+  const [isFocused, setIsFocused] = useState(false);
+  const isFilled = value !== undefined && value !== null && String(value).trim() !== '';
+
+  return (
+    <div className="relative w-full flex flex-col pt-4">
+      <motion.label
+        className="absolute left-4 pointer-events-none select-none text-slate-400 font-semibold"
+        initial={false}
+        animate={{
+          y: (isFocused || isFilled) ? -14 : 14,
+          scale: (isFocused || isFilled) ? 0.85 : 1,
+          color: isFocused ? "#008FD5" : "#94a3b8",
+        }}
+        transition={{ type: "spring", stiffness: 350, damping: 25 }}
+        style={{ originX: 0, originY: 0, zIndex: 10 }}
+      >
+        {label} {required && <span className="text-red-500">*</span>}
+      </motion.label>
+      <input
+        value={value}
+        onFocus={(e) => {
+          setIsFocused(true);
+          onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          setIsFocused(false);
+          onBlur?.(e);
+        }}
+        className={`w-full bg-[#F8FAFC] border text-slate-950 rounded-xl px-4 py-3 text-xs focus:outline-none focus:bg-white focus:border-[#008FD5] focus:ring-4 focus:ring-[#008FD5]/10 hover:border-slate-300 transition-all ${
+          hasError ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10' : 'border-[#E5E7EB]'
+        }`}
+        {...props}
+      />
+    </div>
+  );
+}
+
+interface FloatingTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label: string;
+  hasError: boolean;
+  required?: boolean;
+  value?: string;
+  rows?: number;
+  onChange?: React.ChangeEventHandler<HTMLTextAreaElement>;
+  onFocus?: React.FocusEventHandler<HTMLTextAreaElement>;
+  onBlur?: React.FocusEventHandler<HTMLTextAreaElement>;
+}
+
+function FloatingTextarea({ label, hasError, required, value, onFocus, onBlur, ...props }: FloatingTextareaProps) {
+  const [isFocused, setIsFocused] = useState(false);
+  const isFilled = value !== undefined && value !== null && String(value).trim() !== '';
+
+  return (
+    <div className="relative w-full flex flex-col pt-4">
+      <motion.label
+        className="absolute left-4 pointer-events-none select-none text-slate-400 font-semibold animate-none"
+        initial={false}
+        animate={{
+          y: (isFocused || isFilled) ? -14 : 14,
+          scale: (isFocused || isFilled) ? 0.85 : 1,
+          color: isFocused ? "#008FD5" : "#94a3b8",
+        }}
+        transition={{ type: "spring", stiffness: 350, damping: 25 }}
+        style={{ originX: 0, originY: 0, zIndex: 10 }}
+      >
+        {label} {required && <span className="text-red-500">*</span>}
+      </motion.label>
+      <textarea
+        value={value}
+        onFocus={(e) => {
+          setIsFocused(true);
+          onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          setIsFocused(false);
+          onBlur?.(e);
+        }}
+        className={`w-full bg-[#F8FAFC] border text-slate-950 rounded-xl px-4 py-3 text-xs focus:outline-none focus:bg-white focus:border-[#008FD5] focus:ring-4 focus:ring-[#008FD5]/10 hover:border-slate-300 transition-all resize-y ${
+          hasError ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10' : 'border-[#E5E7EB]'
+        }`}
+        {...props}
+      />
+    </div>
+  );
+}
+
+interface FloatingSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+  label: string;
+  hasError: boolean;
+  required?: boolean;
+  value?: string;
+  onChange?: React.ChangeEventHandler<HTMLSelectElement>;
+  onFocus?: React.FocusEventHandler<HTMLSelectElement>;
+  onBlur?: React.FocusEventHandler<HTMLSelectElement>;
+  children: React.ReactNode;
+}
+
+function FloatingSelect({ label, hasError, required, value, onFocus, onBlur, children, ...props }: FloatingSelectProps) {
+  const [isFocused, setIsFocused] = useState(false);
+  const isFilled = value !== undefined && value !== null && String(value).trim() !== '';
+
+  return (
+    <div className="relative w-full flex flex-col pt-4">
+      <motion.label
+        className="absolute left-4 pointer-events-none select-none text-slate-400 font-semibold"
+        initial={false}
+        animate={{
+          y: (isFocused || isFilled) ? -14 : 14,
+          scale: (isFocused || isFilled) ? 0.85 : 1,
+          color: isFocused ? "#008FD5" : "#94a3b8",
+        }}
+        transition={{ type: "spring", stiffness: 350, damping: 25 }}
+        style={{ originX: 0, originY: 0, zIndex: 10 }}
+      >
+        {label} {required && <span className="text-red-500">*</span>}
+      </motion.label>
+      <select
+        value={value}
+        onFocus={(e) => {
+          setIsFocused(true);
+          onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          setIsFocused(false);
+          onBlur?.(e);
+        }}
+        className={`w-full bg-[#F8FAFC] border text-slate-950 rounded-xl px-4 py-3 pr-10 text-xs focus:outline-none focus:bg-white focus:border-[#008FD5] focus:ring-4 focus:ring-[#008FD5]/10 hover:border-slate-300 transition-all appearance-none cursor-pointer ${
+          hasError ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10' : 'border-[#E5E7EB]'
+        }`}
+        {...props}
+      >
+        {children}
+      </select>
     </div>
   );
 }
@@ -337,8 +507,15 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
     const newShaking: Record<string, boolean> = {};
     let isValid = true;
 
+    const showCompany = String(responses.category || '') === 'Business' || String(responses.category || '') === 'Investment' || String(responses.category || '') === 'Legal';
+    const showContext = showCompany || String(responses.purpose || '').trim().length > 0;
+
     template.fields.forEach(field => {
       const value = responses[field.id];
+      
+      // Skip validation if the progressive field is hidden
+      if (field.id === 'company' && !showCompany) return;
+      if (field.id === 'context' && !showContext) return;
       
       // Required validation check
       if (field.required && (!value || String(value).trim() === '')) {
@@ -420,9 +597,7 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
   };
 
   const renderField = (field: FormField) => {
-    const commonClasses = "w-full bg-slate-50/50 border border-slate-200 focus:bg-white text-slate-950 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-[#008FD5] focus:ring-4 focus:ring-[#008FD5]/10 hover:border-slate-300 transition-all placeholder-slate-400";
-    
-    const isWide = field.id === 'fullName' || field.id === 'company' || field.id === 'purpose';
+    const isWide = field.id === 'fullName' || field.id === 'company' || field.id === 'purpose' || field.id === 'context';
     const hasError = !!errorFields[field.id];
 
     // Helper wrapper component for Framer Motion micro-interactions (shake, hover lifts, error fades)
@@ -464,39 +639,29 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
     switch (field.type) {
       case 'textarea':
         return inputWrapper(
-          <>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              {field.label} {field.required ? '' : <span className="opacity-60 font-normal">(Optional)</span>}
-            </label>
-            <textarea 
-              rows={4} 
-              placeholder={field.placeholder}
-              className={`${commonClasses} resize-y ${hasError ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10' : ''}`} 
-              value={String(responses[field.id] || '')} 
-              onChange={e => { handleChange(field.id, e.target.value); clearError(); }} 
-            />
-          </>
+          <FloatingTextarea 
+            label={field.label}
+            required={field.required}
+            hasError={hasError}
+            rows={4}
+            value={String(responses[field.id] || '')} 
+            onChange={e => { handleChange(field.id, e.target.value); clearError(); }} 
+          />
         );
       case 'dropdown':
         return inputWrapper(
-          <>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              {field.label} {field.required ? '' : <span className="opacity-60 font-normal">(Optional)</span>}
-            </label>
-            <div className="relative">
-              <select 
-                className={`${commonClasses} appearance-none cursor-pointer pr-10 ${hasError ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10' : ''}`}
-                value={String(responses[field.id] || '')} 
-                onChange={e => { handleChange(field.id, e.target.value); clearError(); }}
-              >
-                <option value="" disabled>Select an option</option>
-                {field.options?.map(opt => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
-              <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            </div>
-          </>
+          <FloatingSelect
+            label={field.label}
+            required={field.required}
+            hasError={hasError}
+            value={String(responses[field.id] || '')} 
+            onChange={e => { handleChange(field.id, e.target.value); clearError(); }}
+          >
+            <option value="" disabled></option>
+            {field.options?.map(opt => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </FloatingSelect>
         );
       case 'date':
         return inputWrapper(
@@ -524,7 +689,7 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
             </div>
             
             {!selectedDate ? (
-               <div className="w-full bg-slate-50/50 border border-slate-200 text-slate-400 rounded-xl px-4 py-3 text-xs flex items-center gap-2 cursor-not-allowed">
+               <div className="w-full bg-[#F8FAFC] border border-slate-200 text-slate-400 rounded-xl px-4 py-3 text-xs flex items-center gap-2 cursor-not-allowed">
                   <CalendarX2 size={14} /> Please select a date first
                </div>
             ) : availableTimeSlots.length === 0 ? (
@@ -532,20 +697,37 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
                   <CalendarX2 size={14} /> No availability on this date
                </div>
             ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 mt-2">
+              <motion.div 
+                variants={{
+                  hidden: { opacity: 0 },
+                  show: {
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.03
+                    }
+                  }
+                }}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 mt-2"
+              >
                 {availableTimeSlots.map(timeStr => {
                   const isSelected = responses[field.id] === timeStr;
                   return (
                     <motion.button
                       key={timeStr}
                       type="button"
+                      variants={{
+                        hidden: { opacity: 0, scale: 0.85, y: 5 },
+                        show: { opacity: 1, scale: 1, y: 0, transition: { type: "spring", stiffness: 380, damping: 20 } }
+                      }}
                       whileHover={{ scale: 1.04, y: -1 }}
                       whileTap={{ scale: 0.96 }}
                       onClick={() => { handleChange(field.id, timeStr); clearError(); }}
                       className={`relative py-2.5 px-3 rounded-xl text-[11px] font-bold transition-all border flex items-center justify-center cursor-pointer min-h-[40px] select-none ${
                         isSelected
                           ? 'text-white border-[#008FD5] shadow-xs'
-                          : 'bg-slate-50/50 hover:bg-white text-slate-700 border-slate-200 hover:border-[#008FD5]/40 hover:text-[#008FD5] hover:shadow-2xs'
+                          : 'bg-[#F8FAFC] hover:bg-white text-slate-700 border-slate-200 hover:border-[#008FD5]/40 hover:text-[#008FD5] hover:shadow-2xs'
                       }`}
                     >
                       {isSelected && (
@@ -559,25 +741,21 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
                     </motion.button>
                   );
                 })}
-              </div>
+              </motion.div>
             )}
           </>
         );
       default:
         // text, phone
         return inputWrapper(
-          <>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              {field.label} {field.required ? '' : <span className="opacity-60 font-normal">(Optional)</span>}
-            </label>
-            <input 
-              type={field.type === 'phone' ? 'tel' : 'text'} 
-              placeholder={field.placeholder}
-              className={`${commonClasses} ${hasError ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10' : ''}`} 
-              value={String(responses[field.id] || '')} 
-              onChange={e => { handleChange(field.id, e.target.value); clearError(); }} 
-            />
-          </>
+          <FloatingInput 
+            label={field.label}
+            required={field.required}
+            hasError={hasError}
+            type={field.type === 'phone' ? 'tel' : 'text'}
+            value={String(responses[field.id] || '')} 
+            onChange={e => { handleChange(field.id, e.target.value); clearError(); }} 
+          />
         );
     }
   };
@@ -767,7 +945,48 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
               />
             </div>
 
-            {template.fields.map(renderField)}
+            {(() => {
+              const showCompany = String(responses.category || '') === 'Business' || String(responses.category || '') === 'Investment' || String(responses.category || '') === 'Legal';
+              const showContext = showCompany || String(responses.purpose || '').trim().length > 0;
+
+              return template.fields.map(field => {
+                if (field.id === 'company') {
+                  return (
+                    <AnimatePresence key={field.id}>
+                      {showCompany && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ type: "spring", stiffness: 300, damping: 28 }}
+                          className="col-span-1 md:col-span-2 overflow-hidden"
+                        >
+                          {renderField(field)}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  );
+                }
+                if (field.id === 'context') {
+                  return (
+                    <AnimatePresence key={field.id}>
+                      {showContext && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ type: "spring", stiffness: 300, damping: 28 }}
+                          className="col-span-1 md:col-span-2 overflow-hidden"
+                        >
+                          {renderField(field)}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  );
+                }
+                return renderField(field);
+              });
+            })()}
 
             <div className="col-span-1 md:col-span-2 py-1 mt-2 border-t border-slate-100 pt-5">
               <label className="block text-xs font-semibold text-slate-700 mb-2">Request Priority</label>
