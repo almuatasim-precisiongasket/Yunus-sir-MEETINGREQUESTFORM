@@ -39,10 +39,13 @@ export default function App() {
     setPath(to);
   };
 
-  // Redirect root `/` to `/request`
+  // Redirect root `/` or any unknown/undefined routes to `/dashboard` (login page)
   useEffect(() => {
-    if (path === '/' || path === '') {
-      navigate('/request');
+    const knownRoutes = ['/request', '/dashboard', '/settings', '/forms', '/dispatch'];
+    const isDetail = path.startsWith('/request/') && path !== '/request/';
+    
+    if (path === '/' || path === '' || (!knownRoutes.includes(path) && !isDetail)) {
+      navigate('/dashboard');
     }
   }, [path]);
 
