@@ -409,7 +409,7 @@ export default function App() {
     // ----------------------------------------------------
     // SECURE PASSCODE GATED ACCESS (Login Portal First)
     // ----------------------------------------------------
-    if (!isLoggedIn) {
+    if (!isLoggedIn && !isPublicForm && !isRequestDetail) {
       return (
         <div className="bg-[#0B1F33] min-h-screen flex flex-col justify-center items-center p-4 text-[#111827] antialiased overflow-hidden relative">
           {/* Floating Drifting Background Glow 1 */}
