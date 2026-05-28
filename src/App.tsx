@@ -15,6 +15,7 @@ import CompanyLogo from './components/CompanyLogo';
 import { QRCodeSVG } from 'qrcode.react';
 import WhatsAppDispatch from './components/WhatsAppDispatch';
 import RequestDetail from './components/RequestDetail';
+import { EncryptedText } from './components/ui/encrypted-text';
 
 import { initAuth, googleSignIn, googleLogout } from './lib/googleAuth';
 import { syncFreeBusyToCache } from './lib/googleCalendar';
@@ -461,8 +462,18 @@ export default function App() {
               className="flex flex-col items-center text-center mb-6"
             >
               <CompanyLogo size="md" className="mb-6 scale-105" />
-              <h1 className="text-xl font-bold font-sans tracking-tight text-[#0B1F33]">Executive Admin Portal</h1>
-              <p className="text-sm text-[#6B7280] mt-1 max-w-[280px]">Management Access Only</p>
+              <h1 className="text-xl font-bold font-sans tracking-tight text-[#0B1F33]">
+                <EncryptedText 
+                  text="Welcome, Yunus Sir" 
+                  revealDelayMs={30}
+                  flipDelayMs={40}
+                  encryptedClassName="text-[#008FD5] font-mono opacity-80"
+                  revealedClassName="text-[#0B1F33]"
+                />
+              </h1>
+              <p className="text-xs text-[#6B7280] mt-2 max-w-[340px] leading-relaxed">
+                We’re pleased to have you here. Kindly sign in with your Google account to securely connect your Calendar and Google Meet services for seamless meeting coordination and scheduling.
+              </p>
             </motion.div>
 
             <form onSubmit={handleLoginSubmit} className="space-y-4">
@@ -550,6 +561,23 @@ export default function App() {
                 <span>Sign In with Google</span>
               </motion.button>
             </form>
+
+            <motion.div 
+              variants={{
+                hidden: { opacity: 0, y: 10 },
+                visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 150, damping: 20 } }
+              }}
+              className="mt-6 text-center border-t border-gray-100 pt-4"
+            >
+              <button 
+                type="button"
+                onClick={() => navigate('/request')}
+                className="text-xs font-bold text-[#008FD5] hover:text-[#007AB8] transition-colors cursor-pointer inline-flex items-center gap-1.5 mx-auto hover:underline focus:outline-none"
+              >
+                <span>Send a Preci Form</span>
+                <ExternalLink size={12} />
+              </button>
+            </motion.div>
           </motion.div>
         </div>
       );
