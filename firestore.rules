@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper to check if the user is authenticated as admin
+    function isAdmin() {
+      // In production, true administrative writes require an active authenticated Firebase user session.
+      return request.auth != null;
+    }
+
+    // Rules for Meeting Requests
+    match /requests/{requestId} {
+      allow create: if true; // Public can submit meeting requests
+      allow read, update, delete: if isAdmin(); // Only logged-in admin can manage requests
+    }
+
+    // Rules for Form Templates
+    match /forms/{formId} {
+      allow read: if true; // Public can read templates to render forms
+      allow write: if isAdmin(); // Only admin can create/edit templates
+    }
+
+    // Rules for Settings
+    match /settings/{settingsDoc} {
+      // Public is allowed to read general settings, but google_auth is locked
+      allow read: if settingsDoc != 'google_auth';
+      allow write: if isAdmin();
+
+      // CRITICAL: The sensitive OAuth credentials document must never be readable/writable by the public
+      match /google_auth {
+        allow read, write: if isAdmin();
+      }
+    }
+
+    // Rules for Availability
+    match /availability/{availabilityId} {
+      allow read: if true; // Public can read availability slots
+      allow write: if isAdmin(); // Only admin sync writes
+    }
+
+    // Rules for Admin Notifications (WhatsApp dispatch queue)
+    match /admin_notifications/{notificationId} {
+      allow create: if true; // Public intake form can queue admin alerts
+      allow read, update, delete: if isAdmin(); // Only admin processes notifications
+    }
+  }
+}

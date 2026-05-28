@@ -21,12 +21,12 @@ export async function getOrRefreshGoogleToken(): Promise<string | null> {
 
   // Refresh token is required, call Google OAuth token exchange
   try {
-    const res = await fetch('https://oauth2.googleapis.com/token', {
+    const res = await fetch('/api/google/token', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/json'
       },
-      body: new URLSearchParams({
+      body: JSON.stringify({
         client_id: creds.clientId,
         client_secret: creds.clientSecret,
         refresh_token: creds.refreshToken,
@@ -79,12 +79,12 @@ export async function exchangeCodeForRefreshToken(
   redirectUri: string
 ): Promise<GoogleCredentials | null> {
   try {
-    const res = await fetch('https://oauth2.googleapis.com/token', {
+    const res = await fetch('/api/google/token', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/json'
       },
-      body: new URLSearchParams({
+      body: JSON.stringify({
         client_id: clientId,
         client_secret: clientSecret,
         code: code,

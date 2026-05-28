@@ -89,6 +89,23 @@ export default function App() {
 
   // Initialize status listener
   useEffect(() => {
+    let unsubscribe: (() => void) | null = null;
+
+    // 2. Set up standard session popup listener synchronously
+    unsubscribe = initAuth(
+      (user, token) => {
+        setGoogleUser(user);
+        setGoogleToken(token);
+        setIsGoogleLoading(false);
+        syncFreeBusyToCache(token);
+      },
+      () => {
+        setGoogleUser(null);
+        setGoogleToken(null);
+        setIsGoogleLoading(false);
+      }
+    );
+
     // 1. Check if permanent background connection exists first
     getOrRefreshGoogleToken().then((token) => {
       if (token) {
@@ -104,26 +121,12 @@ export default function App() {
             }
           });
         });
-
-        // 2. Fall back to standard session popup listener
-        const unsubscribe = initAuth(
-          (user, token) => {
-            setGoogleUser(user);
-            setGoogleToken(token);
-            setIsGoogleLoading(false);
-            syncFreeBusyToCache(token);
-          },
-          () => {
-            setGoogleUser(null);
-            setGoogleToken(null);
-            setIsGoogleLoading(false);
-          }
-        );
-        return () => {
-          if (unsubscribe) unsubscribe();
-        };
       }
     });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   // Check for permanent link redirect parameter on boot
@@ -242,7 +245,7 @@ export default function App() {
       if (unsubscribe) unsubscribe();
       if (fallbackInterval) clearInterval(fallbackInterval);
     };
-  }, [isPublicForm, isLoggedIn]);
+  }, [isPublicForm, isLoggedIn, isRequestDetail]);
 
   const addRequest = async (req: MeetingRequest) => {
     // To ensure immediate client-only form reassurance (even if server is loading)
