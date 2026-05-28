@@ -981,12 +981,18 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
                   revealedClassName="text-[#0B1F33]"
                 />
               </h1>
-              <p className="font-sans text-xs md:text-sm text-slate-500 leading-relaxed font-medium mx-auto max-w-xl">
-                <EncryptedText 
-                  text={template.description || "Welcome to PRECI FORM. Our coordination office securely reviews and manages all incoming executive scheduling requests. Please provide accurate details to help us evaluate and coordinate your meeting efficiently."} 
-                  revealDelayMs={12} 
-                  flipDelayMs={25}
-                />
+              <p 
+                className="text-slate-500 text-xs md:text-sm font-sans font-medium leading-relaxed mx-auto text-center mt-3"
+                style={{ 
+                  display: 'block', 
+                  maxWidth: '500px', 
+                  width: '100%', 
+                  whiteSpace: 'normal', 
+                  wordBreak: 'break-word',
+                  margin: '12px auto 0 auto'
+                }}
+              >
+                {template.description || "Welcome to PRECI FORM. Our coordination office securely reviews and manages all incoming executive scheduling requests. Please provide accurate details to help us evaluate and coordinate your meeting efficiently."}
               </p>
             </div>
           </div>
