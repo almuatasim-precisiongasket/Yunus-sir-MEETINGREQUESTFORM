@@ -411,6 +411,18 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
   const [shakingFields, setShakingFields] = useState<Record<string, boolean>>({});
   const [submitState, setSubmitState] = useState<'idle' | 'loading' | 'success'>('idle');
 
+  const completionPercentage = useMemo(() => {
+    const requiredFieldIds = template.fields
+      .filter(f => f.required)
+      .map(f => f.id);
+    if (requiredFieldIds.length === 0) return 100;
+    const filledRequired = requiredFieldIds.filter(id => {
+      const val = responses[id];
+      return val !== undefined && val !== null && String(val).trim() !== '';
+    }).length;
+    return Math.round((filledRequired / requiredFieldIds.length) * 100);
+  }, [responses, template.fields]);
+
   const dateFieldId = useMemo(() => {
     return template.fields.find(f => f.type === 'date')?.id || 'preferredDate';
   }, [template]);
@@ -942,8 +954,17 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -15 }}
-          className="w-full max-w-[840px] bg-white bg-texture rounded-2xl shadow-ambient border border-slate-200/50 p-lg md:p-xxl mt-lg mb-xxl relative font-sans text-left"
+          className="w-full max-w-[840px] bg-white bg-texture rounded-2xl shadow-ambient border border-slate-200/50 p-lg md:p-xxl mt-lg mb-xxl relative font-sans text-left overflow-hidden"
         >
+          {/* Ultra-Thin High-ROI Progress Bar */}
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-slate-100/60 rounded-t-2xl overflow-hidden">
+            <motion.div 
+              initial={{ width: 0 }}
+              animate={{ width: `${completionPercentage}%` }}
+              transition={{ type: "spring", stiffness: 180, damping: 24 }}
+              className="h-full bg-gradient-to-r from-[#008FD5] to-sky-400"
+            />
+          </div>
           <div className="mb-xl text-center md:text-left border-b border-slate-100 pb-lg">
             <h1 className="font-sans text-xl md:text-2xl font-bold text-[#0B1F33] tracking-tight mb-2">{template.title}</h1>
             <p className="font-sans text-xs md:text-sm text-gray-500 max-w-2xl leading-relaxed">
