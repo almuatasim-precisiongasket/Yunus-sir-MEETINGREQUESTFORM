@@ -72,8 +72,8 @@ export default function WhatsAppDispatch() {
   }, []);
 
   const getFormLink = () => {
-    const base = `${window.location.origin}/?request=true`;
-    return selectedFormId ? `${base}&formId=${selectedFormId}` : base;
+    const base = `${window.location.origin}/request`;
+    return selectedFormId ? `${base}?formId=${selectedFormId}` : base;
   };
 
   const formLink = getFormLink();

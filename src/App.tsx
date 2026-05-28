@@ -14,6 +14,7 @@ import { LayoutDashboard, FileText, Link as LinkIcon, ExternalLink, Settings, Lo
 import CompanyLogo from './components/CompanyLogo';
 import { QRCodeSVG } from 'qrcode.react';
 import WhatsAppDispatch from './components/WhatsAppDispatch';
+import RequestDetail from './components/RequestDetail';
 
 import { initAuth, googleSignIn, googleLogout } from './lib/googleAuth';
 import { syncFreeBusyToCache } from './lib/googleCalendar';
@@ -22,10 +23,32 @@ import { getForms, getRequests, addRequest as dbAddRequest, updateRequestStatus,
 import { getOrRefreshGoogleToken } from './lib/googleOAuthRefresh';
 
 export default function App() {
-  // Check if URL is for public request intake
-  const isPublicForm = window.location.search.includes('request=true') || window.location.search.includes('form=true');
+  // HTML5 History Routing state
+  const [path, setPath] = useState(window.location.pathname);
 
-  const [view, setView] = useState<'form' | 'dashboard' | 'forms' | 'dispatch' | 'settings'>('dashboard');
+  useEffect(() => {
+    const handlePopState = () => {
+      setPath(window.location.pathname);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const navigate = (to: string) => {
+    window.history.pushState({}, '', to);
+    setPath(to);
+  };
+
+  // Redirect root `/` to `/request`
+  useEffect(() => {
+    if (path === '/' || path === '') {
+      navigate('/request');
+    }
+  }, [path]);
+
+  const isPublicForm = path === '/request' || path === '/request/';
+  const isRequestDetail = path.startsWith('/request/') && path !== '/request/';
+  const detailRequestId = isRequestDetail ? path.split('/request/')[1] : null;
   const [requests, setRequests] = useState<MeetingRequest[]>([]);
   const [copied, setCopied] = useState(false);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
@@ -91,8 +114,8 @@ export default function App() {
 
   // Check for permanent link redirect parameter on boot
   useEffect(() => {
-    if (window.location.search.includes('settings=true')) {
-      setView('settings');
+    if (window.location.search.includes('settings=true') || path === '/settings') {
+      navigate('/settings');
       setIsLoggedIn(true);
     }
   }, []);
@@ -157,9 +180,9 @@ export default function App() {
     }
   };
 
-  // Copy public form URL containing the ?request=true flag
+  // Copy public form URL containing the clean route
   const handleCopyLink = () => {
-    const publicUrl = `${window.location.origin}/?request=true`;
+    const publicUrl = `${window.location.origin}/request`;
     navigator.clipboard.writeText(publicUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -176,7 +199,7 @@ export default function App() {
   // Listen to requests in real-time with automatic LocalStorage fallback
   useEffect(() => {
     // Only fetch/subscribe requests if we are in admin dashboard mode
-    if (isPublicForm) return;
+    if (isPublicForm || isRequestDetail) return;
 
     let fallbackInterval: any = null;
 
@@ -323,6 +346,9 @@ export default function App() {
       setIsLoggedIn(true);
       sessionStorage.setItem('preci_admin_logged_in', 'true');
       setLoginError('');
+      if (path === '/' || path === '/request' || path === '') {
+        navigate('/dashboard');
+      }
     } else {
       setLoginError('Invalid passcode. Access Denied.');
     }
@@ -342,6 +368,9 @@ export default function App() {
         sessionStorage.setItem('preci_admin_logged_in', 'true');
         
         showToast("Logged in and connected to Google Calendar successfully!", 'success');
+        if (path === '/' || path === '/request' || path === '') {
+          navigate('/dashboard');
+        }
       }
     } catch (err: any) {
       console.error("Google Admin login failed:", err);
@@ -359,7 +388,31 @@ export default function App() {
   const handleLogout = () => {
     setIsLoggedIn(false);
     sessionStorage.removeItem('preci_admin_logged_in');
+    navigate('/request');
   };
+
+  // ----------------------------------------------------
+  // PUBLIC DETAILED TRACKING PORTAL (Client Portal)
+  // ----------------------------------------------------
+  if (isRequestDetail && detailRequestId) {
+    return (
+      <div className="bg-[#F8FAFC] min-h-screen flex flex-col font-body-md text-[#111827] antialiased">
+        <header className="bg-white/90 backdrop-blur-md top-0 z-50 shadow-sm border-b border-[#E5E7EB] w-full fixed">
+          <div className="flex justify-between items-center w-full px-lg py-3 max-w-container-max mx-auto">
+            <CompanyLogo size="sm" className="md:scale-105 origin-left" />
+          </div>
+        </header>
+        <main className="flex-1 flex items-center justify-center pt-[100px] pb-xxl px-margin-mobile md:px-lg w-full">
+          <RequestDetail 
+            requestId={detailRequestId} 
+            onBackToRequest={() => navigate('/request')} 
+            onBackToDashboard={isLoggedIn ? () => navigate('/dashboard') : undefined}
+            isAdmin={isLoggedIn}
+          />
+        </main>
+      </div>
+    );
+  }
 
   // ----------------------------------------------------
   // PUBLIC REQUEST MODE (Stand-alone Form Intake)
@@ -393,7 +446,8 @@ export default function App() {
   // ----------------------------------------------------
   // ADMIN PASSCODE LOGIN SCREEN (High-Fidelity)
   // ----------------------------------------------------
-  if (!isLoggedIn) {
+  const isAdminRoute = path === '/dashboard' || path === '/settings' || path === '/forms' || path === '/dispatch';
+  if (!isLoggedIn && isAdminRoute) {
     return (
       <div className="bg-[#0B1F33] min-h-screen flex flex-col justify-center items-center p-4 text-[#111827] antialiased overflow-hidden relative">
         {/* Floating Drifting Background Glow 1 */}
@@ -542,12 +596,12 @@ export default function App() {
             }}
             className="mt-8 pt-6 border-t border-[#E5E7EB] text-center"
           >
-            <a 
-              href="/?request=true" 
-              className="text-xs text-[#008FD5] hover:underline font-medium inline-flex items-center gap-1"
+            <button 
+              onClick={() => navigate('/request')}
+              className="text-xs text-[#008FD5] hover:underline font-medium inline-flex items-center gap-1 cursor-pointer border-none bg-transparent"
             >
               <ExternalLink size={12} /> Send Meeting Request Form
-            </a>
+            </button>
           </motion.div>
         </motion.div>
       </div>
@@ -609,28 +663,28 @@ export default function App() {
         
         <div className="flex flex-col gap-2 flex-1 px-2">
           <div className="font-label-sm text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-2 px-2">Menu</div>
-          <button onClick={() => setView('dashboard')} className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 w-full text-left relative overflow-hidden ${view === 'dashboard' ? 'bg-[#008FD5]/10 text-[#008FD5]' : 'text-[#6B7280] hover:bg-gray-50'}`}>
-            {view === 'dashboard' && <motion.div layoutId="active-indicator" className="absolute left-0 top-0 bottom-0 w-1 bg-[#008FD5] rounded-r-full" />}
-            <LayoutDashboard size={20} className={view === 'dashboard' ? 'text-[#008FD5] relative z-10' : 'relative z-10'} />
+          <button onClick={() => navigate('/dashboard')} className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 w-full text-left relative overflow-hidden ${path === '/dashboard' ? 'bg-[#008FD5]/10 text-[#008FD5]' : 'text-[#6B7280] hover:bg-gray-50'}`}>
+            {path === '/dashboard' && <motion.div layoutId="active-indicator" className="absolute left-0 top-0 bottom-0 w-1 bg-[#008FD5] rounded-r-full" />}
+            <LayoutDashboard size={20} className={path === '/dashboard' ? 'text-[#008FD5] relative z-10' : 'relative z-10'} />
             <span className="font-label-md text-label-md relative z-10">Requests</span>
           </button>
           
-          <button onClick={() => setView('forms')} className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 w-full text-left relative overflow-hidden ${view === 'forms' ? 'bg-[#008FD5]/10 text-[#008FD5]' : 'text-[#6B7280] hover:bg-gray-50'}`}>
-            {view === 'forms' && <motion.div layoutId="active-indicator" className="absolute left-0 top-0 bottom-0 w-1 bg-[#008FD5] rounded-r-full" />}
-            <FileText size={20} className={view === 'forms' ? 'text-[#008FD5] relative z-10' : 'relative z-10'} />
+          <button onClick={() => navigate('/forms')} className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 w-full text-left relative overflow-hidden ${path === '/forms' ? 'bg-[#008FD5]/10 text-[#008FD5]' : 'text-[#6B7280] hover:bg-gray-50'}`}>
+            {path === '/forms' && <motion.div layoutId="active-indicator" className="absolute left-0 top-0 bottom-0 w-1 bg-[#008FD5] rounded-r-full" />}
+            <FileText size={20} className={path === '/forms' ? 'text-[#008FD5] relative z-10' : 'relative z-10'} />
             <span className="font-label-md text-label-md relative z-10">Form Creator</span>
           </button>
           
-          <button onClick={() => setView('dispatch')} className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 w-full text-left relative overflow-hidden ${view === 'dispatch' ? 'bg-[#008FD5]/10 text-[#008FD5]' : 'text-[#6B7280] hover:bg-gray-50'}`}>
-            {view === 'dispatch' && <motion.div layoutId="active-indicator" className="absolute left-0 top-0 bottom-0 w-1 bg-[#008FD5] rounded-r-full" />}
-            <MessageCircle size={20} className={view === 'dispatch' ? 'text-[#008FD5] relative z-10' : 'relative z-10'} />
+          <button onClick={() => navigate('/dispatch')} className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 w-full text-left relative overflow-hidden ${path === '/dispatch' ? 'bg-[#008FD5]/10 text-[#008FD5]' : 'text-[#6B7280] hover:bg-gray-50'}`}>
+            {path === '/dispatch' && <motion.div layoutId="active-indicator" className="absolute left-0 top-0 bottom-0 w-1 bg-[#008FD5] rounded-r-full" />}
+            <MessageCircle size={20} className={path === '/dispatch' ? 'text-[#008FD5] relative z-10' : 'relative z-10'} />
             <span className="font-label-md text-label-md relative z-10">WhatsApp</span>
           </button>
           
           <div className="font-label-sm text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-2 px-2 mt-8">System</div>
-          <button onClick={() => setView('settings')} className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 w-full text-left relative overflow-hidden ${view === 'settings' ? 'bg-[#008FD5]/10 text-[#008FD5]' : 'text-[#6B7280] hover:bg-gray-50'}`}>
-            {view === 'settings' && <motion.div layoutId="active-indicator" className="absolute left-0 top-0 bottom-0 w-1 bg-[#008FD5] rounded-r-full" />}
-            <Settings size={20} className={view === 'settings' ? 'text-[#008FD5] relative z-10' : 'relative z-10'} />
+          <button onClick={() => navigate('/settings')} className={`group flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 w-full text-left relative overflow-hidden ${path === '/settings' ? 'bg-[#008FD5]/10 text-[#008FD5]' : 'text-[#6B7280] hover:bg-gray-50'}`}>
+            {path === '/settings' && <motion.div layoutId="active-indicator" className="absolute left-0 top-0 bottom-0 w-1 bg-[#008FD5] rounded-r-full" />}
+            <Settings size={20} className={path === '/settings' ? 'text-[#008FD5] relative z-10' : 'relative z-10'} />
             <span className="font-label-md text-label-md relative z-10">Settings</span>
           </button>
         </div>
@@ -754,14 +808,14 @@ export default function App() {
         <main className="flex-1 overflow-y-auto bg-[#F8FAFC] p-margin-mobile md:p-xl lg:p-xxl relative">
           <AnimatePresence mode="wait">
             <motion.div
-              key={view}
+              key={path}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
               className="w-full h-full"
             >
-              {view === 'dashboard' ? (
+              {path === '/dashboard' ? (
                 <Dashboard 
                   requests={requests} 
                   onUpdateStatus={updateStatus} 
@@ -774,11 +828,11 @@ export default function App() {
                     setIsQrModalOpen(true);
                   }}
                 />
-              ) : view === 'forms' ? (
+              ) : path === '/forms' ? (
                 <FormManager />
-              ) : view === 'dispatch' ? (
+              ) : path === '/dispatch' ? (
                 <WhatsAppDispatch />
-              ) : view === 'settings' ? (
+              ) : path === '/settings' ? (
                 <SettingsView 
                   onLinkSuccess={(token) => {
                     setGoogleToken(token);
@@ -789,30 +843,37 @@ export default function App() {
                     setGoogleToken(null);
                   }}
                 />
-              ) : null}
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full gap-4">
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Operational Route Unspecified</p>
+                  <button onClick={() => navigate('/dashboard')} className="px-5 py-2.5 bg-[#0B1F33] hover:bg-[#008FD5] text-white rounded-xl text-xs font-black shadow-sm transition-all active:scale-95 cursor-pointer">
+                    Return to Dashboard
+                  </button>
+                </div>
+              )}
             </motion.div>
           </AnimatePresence>
         </main>
 
         {/* BottomNavBar (Mobile Only) */}
         <nav className="md:hidden fixed bottom-0 w-full flex justify-around items-center px-2 py-2 pb-safe bg-white/95 backdrop-blur-md shadow-lg border-t border-[#E5E7EB] z-50">
-          <button onClick={() => setView('dashboard')} className={`flex flex-col flex-1 items-center justify-center transition-transform duration-100 py-2 relative ${view === 'dashboard' ? 'text-[#008FD5]' : 'text-[#6B7280]'}`}>
-            {view === 'dashboard' && <div className="absolute top-0 w-12 h-1 bg-[#008FD5] rounded-full"></div>}
+          <button onClick={() => navigate('/dashboard')} className={`flex flex-col flex-1 items-center justify-center transition-transform duration-100 py-2 relative ${path === '/dashboard' ? 'text-[#008FD5]' : 'text-[#6B7280]'}`}>
+            {path === '/dashboard' && <div className="absolute top-0 w-12 h-1 bg-[#008FD5] rounded-full"></div>}
             <LayoutDashboard size={24} className="mb-1 mt-1" />
             <span className="font-label-sm text-[11px] font-medium">Dashboard</span>
           </button>
-          <button onClick={() => setView('forms')} className={`flex flex-col flex-1 items-center justify-center transition-colors py-2 relative ${view === 'forms' ? 'text-[#008FD5]' : 'text-[#6B7280]'}`}>
-            {view === 'forms' && <div className="absolute top-0 w-12 h-1 bg-[#008FD5] rounded-full"></div>}
+          <button onClick={() => navigate('/forms')} className={`flex flex-col flex-1 items-center justify-center transition-colors py-2 relative ${path === '/forms' ? 'text-[#008FD5]' : 'text-[#6B7280]'}`}>
+            {path === '/forms' && <div className="absolute top-0 w-12 h-1 bg-[#008FD5] rounded-full"></div>}
             <FileText size={24} className="mb-1 mt-1" />
             <span className="font-label-sm text-[11px]">Form Creator</span>
           </button>
-          <button onClick={() => setView('dispatch')} className={`flex flex-col flex-1 items-center justify-center transition-colors py-2 relative ${view === 'dispatch' ? 'text-[#008FD5]' : 'text-[#6B7280]'}`}>
-            {view === 'dispatch' && <div className="absolute top-0 w-12 h-1 bg-[#008FD5] rounded-full"></div>}
+          <button onClick={() => navigate('/dispatch')} className={`flex flex-col flex-1 items-center justify-center transition-colors py-2 relative ${path === '/dispatch' ? 'text-[#008FD5]' : 'text-[#6B7280]'}`}>
+            {path === '/dispatch' && <div className="absolute top-0 w-12 h-1 bg-[#008FD5] rounded-full"></div>}
             <MessageCircle size={24} className="mb-1 mt-1" />
             <span className="font-label-sm text-[11px]">WhatsApp</span>
           </button>
-          <button onClick={() => setView('settings')} className={`flex flex-col flex-1 items-center justify-center transition-colors py-2 relative ${view === 'settings' ? 'text-[#008FD5]' : 'text-[#6B7280]'}`}>
-            {view === 'settings' && <div className="absolute top-0 w-12 h-1 bg-[#008FD5] rounded-full"></div>}
+          <button onClick={() => navigate('/settings')} className={`flex flex-col flex-1 items-center justify-center transition-colors py-2 relative ${path === '/settings' ? 'text-[#008FD5]' : 'text-[#6B7280]'}`}>
+            {path === '/settings' && <div className="absolute top-0 w-12 h-1 bg-[#008FD5] rounded-full"></div>}
             <Settings size={24} className="mb-1 mt-1" />
             <span className="font-label-sm text-[11px]">Settings</span>
           </button>
@@ -859,7 +920,7 @@ export default function App() {
                 {/* QR Code container with stylized border */}
                 <div className="my-5 p-4 bg-gray-50 rounded-2xl border border-gray-100 shadow-inner flex items-center justify-center">
                   <QRCodeSVG 
-                    value={`${window.location.origin}/?request=true`} 
+                    value={`${window.location.origin}/request`} 
                     size={160} 
                     includeMargin={true}
                     fgColor="#0B1F33"
@@ -869,7 +930,7 @@ export default function App() {
                 </div>
 
                 <div className="w-full bg-[#F3F4F6] p-2.5 rounded-lg text-[11px] font-mono select-all text-[#374151] break-all border border-[#E5E7EB] mb-4 text-center">
-                  {`${window.location.origin}/?request=true`}
+                  {`${window.location.origin}/request`}
                 </div>
                 
                 <div className="flex gap-2 w-full">

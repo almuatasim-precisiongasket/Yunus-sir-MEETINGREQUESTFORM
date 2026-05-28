@@ -718,6 +718,16 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
             <div className="w-full flex flex-col gap-2 font-sans">
               <button 
                 onClick={() => {
+                  window.history.pushState({}, '', `/request/${lastSubmittedReq.id}`);
+                  window.dispatchEvent(new PopStateEvent('popstate'));
+                }} 
+                className="w-full px-5 py-3 bg-[#0B1F33] hover:bg-[#008FD5] text-white rounded-xl text-xs font-black transition-all hover:shadow-md focus:outline-none cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <Sparkles size={14} className="text-amber-400 shrink-0" />
+                <span>Track Live Status & Access Meet Portal</span>
+              </button>
+              <button 
+                onClick={() => {
                   setSubmitted(false);
                   setResponses({});
                   setPriority('Normal');

@@ -392,4 +392,20 @@ export async function saveGoogleCredentials(creds: GoogleCredentials): Promise<v
   }
 }
 
+export async function getRequest(id: string): Promise<MeetingRequest | null> {
+  try {
+    const docRef = doc(db, 'requests', id);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return { ...docSnap.data(), id: docSnap.id } as MeetingRequest;
+    }
+  } catch (err) {
+    console.warn('Firestore getRequest error, using local fallback:', err);
+  }
+  
+  const localRequests = getLocal<MeetingRequest[]>('meeting_requests', []);
+  const req = localRequests.find(r => r.id === id);
+  return req || null;
+}
+
 
