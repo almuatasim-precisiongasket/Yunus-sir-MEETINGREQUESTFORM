@@ -16,6 +16,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import WhatsAppDispatch from './components/WhatsAppDispatch';
 import RequestDetail from './components/RequestDetail';
 import { EncryptedText } from './components/ui/encrypted-text';
+import { BackgroundBeams } from './components/ui/background-beams';
 
 import { initAuth, googleSignIn, googleLogout } from './lib/googleAuth';
 import { syncFreeBusyToCache } from './lib/googleCalendar';
@@ -433,6 +434,9 @@ export default function App() {
             transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
             className="absolute bottom-10 left-0 w-[450px] h-[450px] bg-[#4FC3F7]/10 rounded-full blur-[100px] -z-10 pointer-events-none"
           />
+
+          {/* Dynamic Laser Light Streams Vector Background Beams */}
+          <BackgroundBeams className="absolute inset-0 z-0 pointer-events-none opacity-40" />
 
           <motion.div 
             initial="hidden"
