@@ -126,6 +126,9 @@ export const EncryptedText: React.FC<EncryptedTextProps> = ({
 
   if (!text) return null;
 
+  const words = text.split(" ");
+  let globalCharIndex = 0;
+
   return (
     <motion.span
       ref={ref}
@@ -133,22 +136,38 @@ export const EncryptedText: React.FC<EncryptedTextProps> = ({
       aria-label={text}
       role="text"
     >
-      {text.split("").map((char, index) => {
-        const isRevealed = index < revealCount;
-        const displayChar = isRevealed
-          ? char
-          : char === " "
-            ? " "
-            : (scrambleCharsRef.current[index] ??
-              generateRandomCharacter(charset));
+      {words.map((word, wordIdx) => {
+        const wordChars = word.split("");
+        const renderedWord = (
+          <span key={`w-${wordIdx}`} className="inline-block whitespace-nowrap">
+            {wordChars.map((char, charIdx) => {
+              const overallIndex = globalCharIndex + charIdx;
+              const isRevealed = overallIndex < revealCount;
+              const displayChar = isRevealed
+                ? char
+                : (scrambleCharsRef.current[overallIndex] ??
+                  generateRandomCharacter(charset));
+
+              return (
+                <span
+                  key={`c-${charIdx}`}
+                  className={cn(isRevealed ? revealedClassName : encryptedClassName)}
+                >
+                  {displayChar}
+                </span>
+              );
+            })}
+          </span>
+        );
+        
+        // Advance global character index by word length + 1 (for the space)
+        globalCharIndex += word.length + 1;
 
         return (
-          <span
-            key={index}
-            className={cn(isRevealed ? revealedClassName : encryptedClassName)}
-          >
-            {displayChar}
-          </span>
+          <React.Fragment key={wordIdx}>
+            {renderedWord}
+            {wordIdx < words.length - 1 && " "}
+          </React.Fragment>
         );
       })}
     </motion.span>
