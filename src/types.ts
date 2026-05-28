@@ -1,4 +1,4 @@
-export type FieldType = 'text' | 'textarea' | 'dropdown' | 'date' | 'time' | 'phone';
+export type FieldType = 'text' | 'textarea' | 'dropdown' | 'date' | 'time' | 'phone' | 'email';
 
 export interface FormField {
   id: string;

@@ -31,12 +31,14 @@ const defaultForm: FormTemplate = {
   createdAt: Date.now(),
   fields: [
     { id: "fullName", label: "Name", type: "text", required: true, isSystem: true },
+    { id: "email", label: "Email Address", type: "email", required: true, isSystem: true },
     { id: "company", label: "Company / Organization", type: "text", required: false, isSystem: true },
     { id: "category", label: "Meeting Category", type: "dropdown", required: true, isSystem: false, options: ["Business", "Legal", "Investment", "Personal", "General", "Other"] },
     { id: "phoneNumber", label: "Phone Number", type: "phone", required: false, isSystem: false },
     { id: "preferredDate", label: "Preferred Meeting Date", type: "date", required: true, isSystem: true },
     { id: "preferredTime", label: "Preferred Meeting Time", type: "time", required: true, isSystem: true },
     { id: "expectedDuration", label: "Expected Duration", type: "dropdown", required: true, isSystem: true, options: ["15 minutes", "30 minutes", "45 minutes", "1 hour", "1.5 hours", "2+ hours"] },
+    { id: "source", label: "How did you get the contact?", type: "text", required: true, isSystem: false },
     { id: "purpose", label: "Purpose of Meeting", type: "textarea", required: true, isSystem: true, placeholder: "Briefly describe the purpose of your request or meeting." },
     { id: "context", label: "Detailed Notes / Context", type: "textarea", required: false, isSystem: false, placeholder: "Optional supporting details, project context, or scheduling considerations" }
   ]
@@ -291,6 +293,7 @@ export async function seedRequests(): Promise<MeetingRequest[]> {
       isUrgent: true,
       responses: {
         fullName: "Eng. Robert Chen",
+        email: "robert.chen@apexprecision.com",
         company: "Apex Precision Materials",
         phoneNumber: "+1 (555) 382-9011",
         purpose: "Sourcing partnership for high-grade titanium grade 5 alloy structures.",
@@ -310,6 +313,7 @@ export async function seedRequests(): Promise<MeetingRequest[]> {
       isUrgent: false,
       responses: {
         fullName: "Aditi Rao",
+        email: "aditi.rao@nexusventures.co.uk",
         company: "Nexus Ventures plc",
         phoneNumber: "+44 20 7946 0958",
         purpose: "Strategic investment round review for advanced robotics division.",

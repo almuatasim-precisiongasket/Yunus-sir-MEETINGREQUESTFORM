@@ -533,6 +533,16 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
           isValid = false;
         }
       }
+
+      // Email format validation check
+      if (field.type === 'email' && value && String(value).trim() !== '') {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(String(value).trim())) {
+          newErrors[field.id] = `Please enter a valid email address.`;
+          newShaking[field.id] = true;
+          isValid = false;
+        }
+      }
     });
 
     setErrorFields(newErrors);
@@ -746,13 +756,17 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
           </>
         );
       default:
-        // text, phone
+        // text, phone, email
+        let inputType = 'text';
+        if (field.type === 'phone') inputType = 'tel';
+        else if (field.type === 'email') inputType = 'email';
+        
         return inputWrapper(
           <FloatingInput 
             label={field.label}
             required={field.required}
             hasError={hasError}
-            type={field.type === 'phone' ? 'tel' : 'text'}
+            type={inputType}
             value={String(responses[field.id] || '')} 
             onChange={e => { handleChange(field.id, e.target.value); clearError(); }} 
           />

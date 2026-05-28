@@ -7,6 +7,7 @@ import {
   Clock, 
   User, 
   Briefcase, 
+  Mail,
   ExternalLink, 
   ShieldCheck, 
   AlertCircle, 
@@ -365,6 +366,16 @@ export default function RequestDetail({ requestId, onBackToRequest, onBackToDash
               </span>
             </div>
 
+            {request.responses?.email && (
+              <div>
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Email Address</span>
+                <span className="text-sm text-[#0B1F33] font-bold flex items-center gap-1.5 mt-1 select-all">
+                  <Mail size={14} className="text-[#008FD5] shrink-0" />
+                  {String(request.responses.email)}
+                </span>
+              </div>
+            )}
+
             <div>
               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Institution / Company</span>
               <span className="text-sm text-[#0B1F33] font-bold flex items-center gap-1.5 mt-1">
@@ -403,6 +414,15 @@ export default function RequestDetail({ requestId, onBackToRequest, onBackToDash
                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Meeting Category</span>
                 <span className="inline-block mt-1.5 text-[10px] font-black text-[#0B1F33] bg-[#008FD5]/5 border border-[#008FD5]/20 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                   {String(request.responses.category)}
+                </span>
+              </div>
+            )}
+
+            {request.responses?.source && (
+              <div className="border-t border-slate-50 pt-4.5 col-span-1 sm:col-span-2">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">How did you get the contact?</span>
+                <span className="text-sm text-[#0B1F33] font-bold mt-1.5 block">
+                  {String(request.responses.source)}
                 </span>
               </div>
             )}

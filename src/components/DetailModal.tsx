@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MeetingRequest, RequestStatus } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Calendar, Clock, Building2, Phone, AlertTriangle, ChevronDown, Trash2, Video, ExternalLink, Loader2 } from 'lucide-react';
+import { X, Calendar, Clock, Building2, Phone, Mail, AlertTriangle, ChevronDown, Trash2, Video, ExternalLink, Loader2 } from 'lucide-react';
 import { findExistingCalendarEvent, syncToGoogleCalendar } from '../lib/googleCalendar';
 import { getForms, updateRequestLinks } from '../lib/db';
 
@@ -101,7 +101,10 @@ export default function DetailModal({ request, onClose, onUpdateStatus, onDelete
                       <h2 className="text-base md:text-lg font-bold text-[#0B1F33] tracking-tight">{String(request.responses?.fullName || '')}</h2>
                       <div className="text-xs text-gray-500 flex flex-col gap-1.5 mt-2">
                           <span className="flex items-center gap-2"><Building2 size={14} className="text-gray-400" /> {String(request.responses?.company || '') || 'Individual Request'}</span>
-                          <span className="flex items-center gap-2"><Phone size={14} className="text-gray-400" /> {String(request.responses?.phoneNumber || '')}</span>
+                          <span className="flex items-center gap-2"><Phone size={14} className="text-gray-400" /> {String(request.responses?.phoneNumber || '') || 'No Phone Number'}</span>
+                          {request.responses?.email && (
+                            <span className="flex items-center gap-2"><Mail size={14} className="text-gray-400" /> {String(request.responses.email)}</span>
+                          )}
                       </div>
                   </div>
                   <div className="md:text-right mt-2 md:mt-0">
@@ -162,7 +165,7 @@ export default function DetailModal({ request, onClose, onUpdateStatus, onDelete
               </div>
 
               {(() => {
-                const standardIds = ['fullName', 'company', 'phoneNumber', 'category', 'source', 'preferredDate', 'preferredTime', 'expectedDuration', 'purpose', 'context'];
+                const standardIds = ['fullName', 'email', 'company', 'phoneNumber', 'category', 'source', 'preferredDate', 'preferredTime', 'expectedDuration', 'purpose', 'context'];
                 const customFields = formTemplate?.fields.filter((f: any) => !standardIds.includes(f.id)) || [];
                 const hasAnswers = customFields.some((f: any) => request.responses[f.id] !== undefined && request.responses[f.id] !== '');
                 if (!hasAnswers) return null;
