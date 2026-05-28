@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { Copy, Plus, Trash2, Check, Smartphone, Edit3, ChevronDown, FileText, Send, User, MessageCircle, ExternalLink, ArrowRight, Video, Phone, MoreVertical, CheckCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { FormTemplate, MeetingRequest } from '../types';
-import { getForms, getRequests } from '../lib/db';
+import { getForms, getRequests, getSettings, saveSettings, SettingsData } from '../lib/db';
+import { safeCopyText } from '../lib/utils';
 
 interface Template {
   id: string;
@@ -100,6 +101,23 @@ export default function WhatsAppDispatch() {
         setRequests(data || []);
       })
       .catch(err => console.error("Could not fetch requests for WhatsApp Dispatch", err));
+
+    getSettings()
+      .then((settings) => {
+        if (settings && settings.whatsappTemplates && settings.whatsappTemplates.length > 0) {
+          setTemplates(settings.whatsappTemplates);
+          localStorage.setItem('whatsapp_templates', JSON.stringify(settings.whatsappTemplates));
+          
+          const currentId = selectedTemplate.id;
+          const matched = settings.whatsappTemplates.find(t => t.id === currentId);
+          if (matched) {
+            setSelectedTemplate(matched);
+          } else if (settings.whatsappTemplates[0]) {
+            setSelectedTemplate(settings.whatsappTemplates[0]);
+          }
+        }
+      })
+      .catch((err) => console.error("Failed to load WhatsApp templates from settings cache:", err));
   }, []);
 
   const getFormLink = () => {
@@ -109,9 +127,20 @@ export default function WhatsAppDispatch() {
 
   const formLink = getFormLink();
 
-  const saveTemplates = (newTemplates: Template[]) => {
+  const saveTemplates = async (newTemplates: Template[]) => {
     setTemplates(newTemplates);
     localStorage.setItem('whatsapp_templates', JSON.stringify(newTemplates));
+    
+    try {
+      const currentSettings = await getSettings();
+      await saveSettings({
+        ...currentSettings,
+        whatsappTemplates: newTemplates
+      });
+      console.log('WhatsApp templates synced to Firestore settings.');
+    } catch (err) {
+      console.error('Failed to sync WhatsApp templates to Firestore settings:', err);
+    }
   };
 
   // Helper to extract phone from request
@@ -193,12 +222,12 @@ export default function WhatsAppDispatch() {
 
   const handleCopy = async () => {
     const textToCopy = getPreviewText();
-    try {
-      await navigator.clipboard.writeText(textToCopy);
+    const success = await safeCopyText(textToCopy);
+    if (success) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy text', err);
+    } else {
+      console.error('Failed to copy text via safeCopyText');
     }
   };
 
@@ -259,7 +288,7 @@ export default function WhatsAppDispatch() {
   }, [requests]);
 
   return (
-    <div className="max-w-6xl mx-auto flex flex-col gap-6">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-0 flex flex-col gap-6">
       {/* Header (Aligned perfectly to fix vertical overlap bug) */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-gray-100 pb-5">
         <div>

@@ -12,7 +12,7 @@ export async function sendAutoReply(accessToken: string, request: MeetingRequest
 
   if (!toEmail) {
     console.warn("Could not find recipient email for auto-reply.");
-    return;
+    throw new Error("No recipient email address was found in the request form responses.");
   }
 
   const subject = type === 'Approved' 
@@ -76,12 +76,15 @@ export async function sendAutoReply(accessToken: string, request: MeetingRequest
     });
 
     if (!res.ok) {
-      console.error("Failed to send auto-reply", await res.text());
+      const errText = await res.text();
+      console.error("Failed to send auto-reply", errText);
+      throw new Error(`Gmail API error: ${errText}`);
     } else {
       console.log("Auto-reply sent to", toEmail);
     }
   } catch (err) {
     console.error("Error sending auto-reply", err);
+    throw err;
   }
 }
 

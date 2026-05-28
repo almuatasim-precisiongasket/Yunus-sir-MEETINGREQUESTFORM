@@ -93,22 +93,22 @@ export default function FormManager() {
   const editingForm = forms.find(f => f.id === editingFormId);
 
   return (
-    <div className="max-w-5xl mx-auto flex flex-col gap-6">
-      <div className="flex justify-between items-end">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-0 flex flex-col gap-6">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-[#0B1F33]">Form Configuration</h2>
           <p className="text-sm text-gray-500 mt-1">Manage public intake templates and fields.</p>
         </div>
         <button 
           onClick={handleCreateNew}
-          className="bg-[#0B1F33] text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-opacity-90 flex items-center gap-2"
+          className="bg-[#0B1F33] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-opacity-90 flex items-center justify-center gap-2 w-full sm:w-auto min-h-[40px] no-tap-highlight"
         >
           <Plus size={14} /> New Template
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="col-span-1 border-r border-gray-200 pr-6 space-y-3">
+        <div className="col-span-1 border-b md:border-b-0 md:border-r border-gray-200 pb-6 md:pb-0 pr-0 md:pr-6 space-y-3">
           {forms.map(form => (
             <div 
               key={form.id} 
@@ -206,7 +206,7 @@ function FormEditor({ form, onSave, onCancel }: { form: FormTemplate, onSave: (f
                </button>
             </div>
             <div className="w-full scale-[0.98] origin-top pb-24">
-              <PublicForm template={draft} onSubmit={() => {}} />
+              <PublicForm template={draft} onSubmit={() => alert("Notice: This is a form preview submission. Your sample request has not been recorded.")} />
             </div>
           </div>
         </div>
@@ -220,7 +220,7 @@ function FormEditor({ form, onSave, onCancel }: { form: FormTemplate, onSave: (f
         <Eye size={16} /> Preview Draft
       </button>
 
-      <div className="px-8 py-5 border-b border-gray-50 flex justify-between items-center bg-[#F9FAFB]/50">
+      <div className="px-4 sm:px-8 py-5 border-b border-gray-50 flex justify-between items-center bg-[#F9FAFB]/50">
         <h3 className="font-black text-[#0B1F33] tracking-tight">Edit Form Template</h3>
         <div className="flex gap-3">
           <button onClick={onCancel} className="px-4 py-2 text-xs font-bold text-gray-500 hover:text-[#0B1F33] transition-colors cursor-pointer">Cancel</button>
@@ -230,7 +230,7 @@ function FormEditor({ form, onSave, onCancel }: { form: FormTemplate, onSave: (f
         </div>
       </div>
 
-      <div className="p-8 space-y-8">
+      <div className="p-4 sm:p-8 space-y-8">
         <div className="space-y-5">
           <div>
             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Form Title</label>
@@ -298,8 +298,8 @@ function FormEditor({ form, onSave, onCancel }: { form: FormTemplate, onSave: (f
                     >
                       <GripVertical size={14} className="opacity-70 shrink-0" />
                     </motion.div>
-                    <div className="flex-1 grid grid-cols-12 gap-4 items-center">
-                    <div className="col-span-5 flex items-center gap-3">
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 items-stretch md:items-center">
+                    <div className="col-span-1 md:col-span-5 flex items-center gap-3">
                       <input 
                         type="text" 
                         value={field.label}
@@ -310,11 +310,11 @@ function FormEditor({ form, onSave, onCancel }: { form: FormTemplate, onSave: (f
                       />
                       {field.isSystem && <span className="shrink-0 text-[10px] bg-amber-50 text-amber-700 px-2 py-1 rounded-full font-black uppercase tracking-tighter border border-amber-100/50">Core</span>}
                     </div>
-                    <div className="col-span-4 relative">
+                    <div className="col-span-1 md:col-span-4 relative">
                       <select 
                         value={field.type}
                         onChange={e => handleFieldChange(field.id, { type: e.target.value as FieldType })}
-                        className="w-full appearance-none text-[11px] font-bold text-[#4B5563] bg-[#F9FAFB] border border-[#F3F4F6] rounded-xl px-4 py-2.5 pr-10 focus:outline-none transition-all disabled:opacity-60 cursor-pointer"
+                        className="w-full appearance-none text-[11px] font-bold text-[#4B5563] bg-[#F9FAFB] border border-[#F3F4F6] rounded-xl px-4 py-2.5 pr-10 focus:outline-none transition-all disabled:opacity-60 cursor-pointer no-tap-highlight"
                         disabled={field.isSystem}
                       >
                         <option value="text">Short Text</option>
@@ -335,7 +335,7 @@ function FormEditor({ form, onSave, onCancel }: { form: FormTemplate, onSave: (f
                         />
                       )}
                     </div>
-                    <div className="col-span-3 flex items-center justify-end gap-4">
+                    <div className="col-span-1 md:col-span-3 flex items-center justify-between md:justify-end gap-4 border-t md:border-t-0 pt-3 md:pt-0 border-gray-100">
                       <label className="flex items-center gap-2 cursor-pointer group">
                         <input 
                           type="checkbox" 
@@ -346,7 +346,7 @@ function FormEditor({ form, onSave, onCancel }: { form: FormTemplate, onSave: (f
                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-[#111827] transition-colors">Required</span>
                       </label>
                       {!field.isSystem && (
-                        <button onPointerDown={(e) => e.stopPropagation()} onClick={() => removeField(field.id)} className="text-gray-400 hover:text-red-500 transition-all p-2 hover:bg-red-50 rounded-xl cursor-pointer">
+                        <button onPointerDown={(e) => e.stopPropagation()} onClick={() => removeField(field.id)} className="text-gray-400 hover:text-red-500 transition-all p-2 hover:bg-red-50 rounded-xl cursor-pointer no-tap-highlight">
                           <Trash2 size={16} />
                         </button>
                       )}

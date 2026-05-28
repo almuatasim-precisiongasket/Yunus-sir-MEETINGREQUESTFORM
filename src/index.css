@@ -96,6 +96,7 @@ body {
     word-wrap: normal;
     direction: ltr;
     -webkit-font-feature-settings: 'liga';
+    font-feature-settings: 'liga';
     -webkit-font-smoothing: antialiased;
 }
 
@@ -129,4 +130,73 @@ input[type="radio"] {
     z-index: 10;
     mix-blend-mode: overlay;
     border-radius: inherit;
+}
+
+/* Custom mobile/PWA utilities (Issue #29/30 & Mobile Optimization) */
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@utility mt-safe {
+  margin-top: env(safe-area-inset-top, 0px);
+}
+@utility mb-safe {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+@utility h-screen-safe {
+  height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+}
+@utility scroll-touch {
+  -webkit-overflow-scrolling: touch;
+}
+@utility no-tap-highlight {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+/* Premium Mobile Landscape Orientation Optimization */
+@media (max-height: 520px) and (orientation: landscape) {
+  /* Optimize dynamic brand and intake wrapper spacing */
+  .mt-lg {
+    margin-top: 12px !important;
+  }
+  .mb-xxl {
+    margin-bottom: 24px !important;
+  }
+  .mb-xl {
+    margin-bottom: 16px !important;
+  }
+  .pb-lg {
+    padding-bottom: 12px !important;
+  }
+  .pt-5 {
+    padding-top: 12px !important;
+  }
+  .mt-2 {
+    margin-top: 4px !important;
+  }
+  
+  /* Compress public intake card padding */
+  .p-margin-mobile {
+    padding: 16px !important;
+  }
+  
+  /* Hide non-interactive SVG dots and ambient glows to save screen estate */
+  .pointer-events-none.opacity-40 {
+    display: none !important;
+  }
+  .blur-\[80px\], .blur-\[60px\], .blur-\[120px\], .blur-\[100px\] {
+    display: none !important;
+  }
+  
+  /* Maximize space inside admin review detail overlays */
+  .max-h-\[90vh\] {
+    max-height: 96vh !important;
+  }
+  .p-md {
+    padding: 8px !important;
+  }
 }

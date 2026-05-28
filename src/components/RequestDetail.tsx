@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { MeetingRequest } from '../types';
 import { getRequest } from '../lib/db';
+import { safeCopyText } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Calendar, 
@@ -50,14 +51,14 @@ export default function RequestDetail({ requestId, onBackToRequest, onBackToDash
 
   const handleCopyId = () => {
     if (!request) return;
-    navigator.clipboard.writeText(`PEG-${request.id.slice(0, 8).toUpperCase()}`);
+    safeCopyText(`PEG-${request.id.slice(0, 8).toUpperCase()}`);
     setCopiedId(true);
     setTimeout(() => setCopiedId(false), 2000);
   };
 
   const handleCopyMeet = () => {
     if (!request?.meetLink) return;
-    navigator.clipboard.writeText(request.meetLink);
+    safeCopyText(request.meetLink);
     setCopiedMeet(true);
     setTimeout(() => setCopiedMeet(false), 2000);
   };

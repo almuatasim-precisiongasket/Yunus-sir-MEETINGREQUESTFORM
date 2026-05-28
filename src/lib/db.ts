@@ -77,6 +77,8 @@ export interface SettingsData {
   adminPhone: string;
   emailAlertsEnabled: boolean;
   whatsappAlertsEnabled: boolean;
+  whatsappTemplates?: any[];
+  productionUrl?: string;
 }
 
 const defaultSettingsFallback: SettingsData = {
@@ -86,7 +88,9 @@ const defaultSettingsFallback: SettingsData = {
   adminEmail: '',
   adminPhone: '',
   emailAlertsEnabled: false,
-  whatsappAlertsEnabled: false
+  whatsappAlertsEnabled: false,
+  whatsappTemplates: [],
+  productionUrl: ''
 };
 
 export async function getSettings(): Promise<SettingsData> {
@@ -149,16 +153,6 @@ export async function getForms(): Promise<FormTemplate[]> {
       forms.push({ ...doc.data(), id: doc.id } as FormTemplate);
     });
 
-    const firestoreDefault = forms.find(f => f.id === 'form-default');
-    if (firestoreDefault && firestoreDefault.description !== defaultForm.description) {
-      await updateForm('form-default', defaultForm);
-      const idx = forms.findIndex(f => f.id === 'form-default');
-      if (idx !== -1) forms[idx] = defaultForm;
-    } else if (!firestoreDefault) {
-      await addForm(defaultForm);
-      forms.push(defaultForm);
-    }
-
     if (forms.length > 0) {
       return forms.sort((a, b) => a.createdAt - b.createdAt);
     }
@@ -166,12 +160,20 @@ export async function getForms(): Promise<FormTemplate[]> {
     console.warn('Firestore getForms error, using local/fallback:', err);
   }
 
-  const localForms = getLocal<FormTemplate[]>('form_templates', [defaultForm]);
-  if (localForms.length > 0 && localForms[0].description !== defaultForm.description) {
-    localForms[0] = defaultForm;
-    setLocal('form_templates', localForms);
+  return getLocal<FormTemplate[]>('form_templates', [defaultForm]);
+}
+
+export async function ensureDefaultFormExists(): Promise<void> {
+  try {
+    const docRef = doc(db, 'forms', 'form-default');
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) {
+      await addForm(defaultForm);
+      console.log('Seeded default form successfully.');
+    }
+  } catch (err) {
+    console.warn('Firestore ensureDefaultFormExists check failed, proceeding defensively:', err);
   }
-  return localForms;
 }
 
 export async function addForm(form: FormTemplate): Promise<FormTemplate> {

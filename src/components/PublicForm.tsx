@@ -5,6 +5,7 @@ import { CheckCircle2, ChevronDown, Send, Loader2, Copy, Check, Calendar, Clock,
 import { getCalendarAvailability, getSettings, SettingsData } from '../lib/db';
 import { EncryptedText } from './ui/encrypted-text';
 import { DotGrid } from './ui/dot-grid';
+import { safeCopyText } from '../lib/utils';
 
 interface CustomDatePickerProps {
   value: string;
@@ -110,7 +111,7 @@ function CustomDatePicker({ value, onChange, hasError, blackoutDates = [] }: Cus
       {/* Clickable Trigger Input */}
       <div 
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full bg-slate-50/50 border text-slate-950 rounded-xl px-4 py-3 text-xs flex items-center justify-between cursor-pointer transition-all ${
+        className={`w-full bg-slate-50/50 border text-slate-950 rounded-xl px-4 py-3 text-base md:text-sm flex items-center justify-between cursor-pointer transition-all no-tap-highlight ${
           isOpen 
             ? 'bg-white border-[#008FD5] ring-4 ring-[#008FD5]/10' 
             : hasError 
@@ -168,9 +169,9 @@ function CustomDatePicker({ value, onChange, hasError, blackoutDates = [] }: Cus
             </div>
 
             {/* Weekdays Headers */}
-            <div className="grid grid-cols-7 gap-1 text-center mb-2 font-sans">
+            <div className="grid grid-cols-7 gap-1 text-center mb-2 font-sans justify-items-center">
               {weekdays.map(d => (
-                <span key={d} className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{d}</span>
+                <span key={d} className="w-full aspect-square max-w-[36px] max-h-[36px] text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-center leading-none">{d}</span>
               ))}
             </div>
 
@@ -193,7 +194,7 @@ function CustomDatePicker({ value, onChange, hasError, blackoutDates = [] }: Cus
                 >
                   {/* Empty cells for leading offset */}
                   {Array.from({ length: firstDayIndex }).map((_, idx) => (
-                    <span key={`empty-${idx}`} className="h-7 w-7 flex items-center justify-center"></span>
+                    <span key={`empty-${idx}`} className="w-full aspect-square max-w-[36px] max-h-[36px] flex items-center justify-center"></span>
                   ))}
 
                   {/* Real Day cells */}
@@ -206,7 +207,7 @@ function CustomDatePicker({ value, onChange, hasError, blackoutDates = [] }: Cus
                         disabled={isDisabled}
                         onClick={() => handleSelectDay(day)}
                         title={isBlackout ? `Holiday/Blackout: ${blackoutLabel}` : undefined}
-                        className={`h-7 w-7 rounded-lg text-xs font-bold flex items-center justify-center relative cursor-pointer transition-all duration-150 select-none ${
+                        className={`w-full aspect-square max-w-[36px] max-h-[36px] rounded-lg text-xs font-bold flex items-center justify-center relative cursor-pointer transition-all duration-150 select-none no-tap-highlight ${
                           isDisabled 
                             ? isBlackout
                               ? 'text-rose-400 bg-rose-50/40 border border-rose-100/30 cursor-not-allowed font-semibold'
@@ -282,7 +283,7 @@ function FloatingInput({ label, hasError, required, value, onFocus, onBlur, ...p
           setIsFocused(false);
           onBlur?.(e);
         }}
-        className={`w-full bg-[#F8FAFC] border text-slate-950 rounded-xl px-4 py-3 text-xs focus:outline-none focus:bg-white focus:border-[#008FD5] focus:ring-4 focus:ring-[#008FD5]/10 hover:border-slate-300 transition-all ${
+        className={`w-full bg-[#F8FAFC] border text-slate-950 rounded-xl px-4 py-3 text-base md:text-sm focus:outline-none focus:bg-white focus:border-[#008FD5] focus:ring-4 focus:ring-[#008FD5]/10 hover:border-slate-300 transition-all no-tap-highlight ${
           hasError ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10' : 'border-[#E5E7EB]'
         }`}
         {...props}
@@ -331,7 +332,7 @@ function FloatingTextarea({ label, hasError, required, value, onFocus, onBlur, .
           setIsFocused(false);
           onBlur?.(e);
         }}
-        className={`w-full bg-[#F8FAFC] border text-slate-950 rounded-xl px-4 py-3 text-xs focus:outline-none focus:bg-white focus:border-[#008FD5] focus:ring-4 focus:ring-[#008FD5]/10 hover:border-slate-300 transition-all resize-y ${
+        className={`w-full bg-[#F8FAFC] border text-slate-950 rounded-xl px-4 py-3 text-base md:text-sm focus:outline-none focus:bg-white focus:border-[#008FD5] focus:ring-4 focus:ring-[#008FD5]/10 hover:border-slate-300 transition-all resize-y no-tap-highlight ${
           hasError ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10' : 'border-[#E5E7EB]'
         }`}
         {...props}
@@ -380,7 +381,7 @@ function FloatingSelect({ label, hasError, required, value, onFocus, onBlur, chi
           setIsFocused(false);
           onBlur?.(e);
         }}
-        className={`w-full bg-[#F8FAFC] border text-slate-950 rounded-xl px-4 py-3 pr-10 text-xs focus:outline-none focus:bg-white focus:border-[#008FD5] focus:ring-4 focus:ring-[#008FD5]/10 hover:border-slate-300 transition-all appearance-none cursor-pointer ${
+        className={`w-full bg-[#F8FAFC] border text-slate-950 rounded-xl px-4 py-3 pr-10 text-base md:text-sm focus:outline-none focus:bg-white focus:border-[#008FD5] focus:ring-4 focus:ring-[#008FD5]/10 hover:border-slate-300 transition-all appearance-none cursor-pointer no-tap-highlight ${
           hasError ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10' : 'border-[#E5E7EB]'
         }`}
         {...props}
@@ -469,7 +470,7 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
         const timeString = `${pad(hour)}:${pad(min)}`; // Local time string
         
         // Build a start Date for this exact slot in local time to compare
-        const slotStart = new Date(`${selectedDate}T${timeString}:00`);
+        const slotStart = new Date(`${selectedDate}T${timeString}:00+03:00`);
         const slotEnd = new Date(slotStart.getTime() + 30 * 60000); // assume 30 min default duration here
         
         // Check if overlaps with any busy block
@@ -488,7 +489,7 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
   }, [responses, busySlots, dateFieldId, businessSettings]);
 
   const handleCopyId = (id: string) => {
-    navigator.clipboard.writeText(id);
+    safeCopyText(id);
     setCopiedId(true);
     setTimeout(() => setCopiedId(false), 2000);
   };
@@ -572,7 +573,18 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
     return isValid;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+function parseDuration(durationStr: string): number {
+  const norm = (durationStr || '').toLowerCase();
+  if (norm.includes('15')) return 15;
+  if (norm.includes('30')) return 30;
+  if (norm.includes('45')) return 45;
+  if (norm.includes('1.5') || norm.includes('90')) return 90;
+  if (norm.includes('1 hour') || norm.includes('1h')) return 60;
+  if (norm.includes('2')) return 120;
+  return 60; // default 1 hour
+}
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (honeypot) {
       console.warn("Spam bot submission caught via honeypot.");
@@ -586,34 +598,78 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
     }
 
     setSubmitState('loading');
-    
-    // Premium loading delay simulation
-    setTimeout(() => {
-      const generatedId = (typeof crypto !== 'undefined' && crypto.randomUUID) 
-        ? crypto.randomUUID() 
-        : `req-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 
-      const newRequest: MeetingRequest = {
-        id: generatedId,
-        formId: template.id,
-        createdAt: Date.now(),
-        status: 'Pending',
-        isUrgent: priority === 'Urgent' || priority === 'Important',
-        priority,
-        responses,
-      };
+    // Real-time double booking check (Issue #14)
+    try {
+      const selectedDate = responses[dateFieldId] as string;
+      const selectedTime = responses[timeFieldId] as string;
+      const expectedDuration = responses[durationFieldId] as string;
 
+      if (selectedDate && selectedTime) {
+        const freshAvailability = await getCalendarAvailability();
+        const freshBusySlots = freshAvailability?.busy || [];
+
+        const slotStart = new Date(`${selectedDate}T${selectedTime}:00+03:00`);
+        const durationMin = parseDuration(expectedDuration);
+        const slotEnd = new Date(slotStart.getTime() + durationMin * 60000);
+
+        const isDoubleBooked = freshBusySlots.some((b: any) => {
+          const bStart = new Date(b.start);
+          const bEnd = new Date(b.end);
+          return (slotStart < bEnd && slotEnd > bStart);
+        });
+
+        if (isDoubleBooked) {
+          setSubmitState('idle');
+          setErrorFields({
+            [timeFieldId]: "This time slot has just been booked. Please choose another available slot."
+          });
+          setShakingFields({
+            [timeFieldId]: true
+          });
+          setTimeout(() => setShakingFields({}), 600);
+          return;
+        }
+      }
+    } catch (bookingErr) {
+      console.warn("Real-time double booking check failed, proceeding defensively:", bookingErr);
+    }
+
+    // Immediate Form Intake (Issue #26)
+    const generatedId = (typeof crypto !== 'undefined' && crypto.randomUUID) 
+      ? crypto.randomUUID() 
+      : `req-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+
+    const newRequest: MeetingRequest = {
+      id: generatedId,
+      formId: template.id,
+      createdAt: Date.now(),
+      status: 'Pending',
+      isUrgent: priority === 'Urgent' || priority === 'Important',
+      priority,
+      responses,
+    };
+
+    try {
+      // Save data immediately before simulated visual loading to prevent data loss on tab close
       onSubmit(newRequest);
       setLastSubmittedReq(newRequest);
-      
-      setSubmitState('success');
-      
-      // Delay revealing the success screen to showcase checkmark morph
+
+      // Keep the visual premium loading and success checkmark morph animations async
       setTimeout(() => {
-        setSubmitted(true);
-        setSubmitState('idle');
+        setSubmitState('success');
+        
+        // Delay revealing the success screen to showcase checkmark morph
+        setTimeout(() => {
+          setSubmitted(true);
+          setSubmitState('idle');
+        }, 1000);
       }, 1000);
-    }, 1500);
+    } catch (err) {
+      console.error("Immediate database write failed:", err);
+      setSubmitState('idle');
+      alert("Booking failed. Please verify your connection and try again.");
+    }
   };
 
   const handleChange = (id: string, value: string) => {
@@ -753,7 +809,7 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
                       whileHover={{ scale: 1.04, y: -1 }}
                       whileTap={{ scale: 0.96 }}
                       onClick={() => { handleChange(field.id, timeStr); clearError(); }}
-                      className={`relative py-2.5 px-3 rounded-xl text-[11px] font-bold transition-all border flex items-center justify-center cursor-pointer min-h-[40px] select-none ${
+                      className={`relative py-2.5 px-3 rounded-xl text-[11px] font-bold transition-all border flex items-center justify-center cursor-pointer min-h-[44px] select-none no-tap-highlight ${
                         isSelected
                           ? 'text-white border-[#008FD5] shadow-xs'
                           : 'bg-[#F8FAFC] hover:bg-white text-slate-700 border-slate-200 hover:border-[#008FD5]/40 hover:text-[#008FD5] hover:shadow-2xs'
@@ -956,6 +1012,7 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
                   setSubmitted(false);
                   setResponses({});
                   setPriority('Normal');
+                  setLastSubmittedReq(null);
                 }} 
                 className="w-full px-5 py-3 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-700 transition-all hover:shadow-xs focus:outline-none cursor-pointer"
               >
@@ -970,7 +1027,7 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -15 }}
-          className="w-full max-w-[840px] bg-white bg-texture rounded-2xl shadow-ambient border border-slate-200/50 p-lg md:p-xxl mt-lg mb-xxl relative font-sans text-left overflow-hidden"
+          className="w-full max-w-[840px] bg-white bg-texture rounded-2xl shadow-ambient border border-slate-200/50 p-margin-mobile sm:p-lg md:p-xxl mt-lg mb-xxl relative font-sans text-left overflow-hidden"
         >
           {/* Ultra-Thin High-ROI Progress Bar */}
           <div className="absolute top-0 left-0 right-0 h-[3px] bg-slate-100/60 rounded-t-2xl overflow-hidden">

@@ -48,7 +48,7 @@ function getRequestDateTime(r: MeetingRequest): { date: string, time: string } {
 
 interface DashboardProps {
   requests: MeetingRequest[];
-  onUpdateStatus: (id: string, status: RequestStatus) => void;
+  onUpdateStatus: (id: string, status: RequestStatus) => Promise<void> | void;
   onSeedDemoData?: () => void;
   onDeleteRequest?: (id: string) => void;
   googleToken?: string | null;
@@ -137,7 +137,7 @@ export default function Dashboard({ requests, onUpdateStatus, onSeedDemoData, on
     <motion.div 
        initial={{ opacity: 0, y: 10 }}
        animate={{ opacity: 1, y: 0 }}
-       className="max-w-container-max mx-auto space-y-md md:space-y-xl pb-32 md:pb-8"
+       className="max-w-container-max mx-auto px-4 sm:px-6 md:px-0 space-y-md md:space-y-xl pb-32 md:pb-8"
      >
       {/* Brand & Stats Header */}
       <section className="flex flex-col lg:flex-row gap-4 lg:gap-lg justify-between items-start lg:items-end">
@@ -254,7 +254,7 @@ export default function Dashboard({ requests, onUpdateStatus, onSeedDemoData, on
                                      onClick={onSeedDemoData}
                                      className="px-8 py-3 bg-[#008FD5] text-white hover:bg-[#007AB8] transition-all font-black text-sm rounded-xl shadow-lg shadow-blue-500/20 active:scale-[0.98] cursor-pointer"
                                    >
-                                     Populate 3 Test Requests
+                                     Populate 2 Test Requests
                                    </button>
                                )}
                            </div>
@@ -280,7 +280,7 @@ export default function Dashboard({ requests, onUpdateStatus, onSeedDemoData, on
                                exit={{ opacity: 0, scale: 0.95 }}
                                whileHover={{ y: -1.5, boxShadow: "0 6px 20px rgba(11,31,51,0.03)" }}
                                onClick={() => setSelectedReqId(req.id)} 
-                               className={`group flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-md p-4 md:p-lg items-stretch md:items-center hover:bg-[#008FD5]/5 hover:border-gray-200 transition-all duration-200 cursor-pointer border-y border-transparent ${req.status === 'Declined' ? 'opacity-70' : ''}`}
+                               className={`group flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-md p-4 md:p-lg items-stretch md:items-center hover:bg-[#008FD5]/5 hover:border-gray-200 transition-all duration-200 cursor-pointer border-y border-transparent no-tap-highlight ${req.status === 'Declined' ? 'opacity-70' : ''}`}
                            >
                                {/* Mobile Accent Header */}
                                <div className="md:hidden flex justify-between items-center w-full pb-2 border-b border-gray-100 mb-1">
@@ -356,16 +356,16 @@ export default function Dashboard({ requests, onUpdateStatus, onSeedDemoData, on
                                        <button 
                                          onClick={(e) => { e.stopPropagation(); onUpdateStatus(req.id, 'Approved'); }}
                                          title="Quick Approve & Sync"
-                                         className="p-2 bg-emerald-50 hover:bg-emerald-500 hover:text-white text-emerald-700 rounded-xl border border-emerald-100 shadow-3xs transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center"
+                                         className="w-11 h-11 md:w-8 md:h-8 bg-emerald-50 hover:bg-emerald-500 hover:text-white text-emerald-700 rounded-xl border border-emerald-100 shadow-3xs transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center no-tap-highlight"
                                        >
-                                         <Check size={14} className="stroke-[3.5px]" />
+                                         <Check size={16} className="stroke-[3.5px]" />
                                        </button>
                                        <button 
                                          onClick={(e) => { e.stopPropagation(); onUpdateStatus(req.id, 'Declined'); }}
                                          title="Quick Decline"
-                                         className="p-2 bg-rose-50 hover:bg-rose-500 hover:text-white text-rose-700 rounded-xl border border-rose-100 shadow-3xs transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center"
+                                         className="w-11 h-11 md:w-8 md:h-8 bg-rose-50 hover:bg-rose-500 hover:text-white text-rose-700 rounded-xl border border-rose-100 shadow-3xs transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center no-tap-highlight"
                                        >
-                                         <X size={14} className="stroke-[3.5px]" />
+                                         <X size={16} className="stroke-[3.5px]" />
                                        </button>
                                      </div>
                                    ) : (
@@ -508,7 +508,7 @@ export default function Dashboard({ requests, onUpdateStatus, onSeedDemoData, on
              onClick={onSeedDemoData} 
              className="text-xs font-semibold text-[#008FD5] hover:text-[#0B1F33] bg-[#008FD5]/5 hover:bg-[#008FD5]/10 px-4 py-2 rounded-lg transition-colors border border-dashed border-[#008FD5]/20"
            >
-             Reset DB to 3 Premium Test Requests
+             Reset DB to 2 Premium Test Requests
            </button>
         </div>
       )}
@@ -520,7 +520,7 @@ export default function Dashboard({ requests, onUpdateStatus, onSeedDemoData, on
               request={selectedReq} 
               onClose={() => setSelectedReqId(null)} 
               onUpdateStatus={(s) => {
-                onUpdateStatus(selectedReq.id, s);
+                return onUpdateStatus(selectedReq.id, s);
               }}
               onDelete={() => {
                 if (onDeleteRequest) {

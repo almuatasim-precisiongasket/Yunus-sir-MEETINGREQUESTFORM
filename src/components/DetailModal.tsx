@@ -8,7 +8,7 @@ import { getForms, updateRequestLinks } from '../lib/db';
 interface DetailModalProps {
   request: MeetingRequest;
   onClose: () => void;
-  onUpdateStatus: (s: RequestStatus) => void;
+  onUpdateStatus: (s: RequestStatus) => Promise<void> | void;
   onDelete?: () => void;
   googleToken?: string | null;
   onConnectGoogle?: () => void;
@@ -31,6 +31,15 @@ export default function DetailModal({ request, onClose, onUpdateStatus, onDelete
       })
       .catch(console.error);
   }, [request.formId]);
+
+  // Prevent background scroll when modal is active on iOS/Android (Issue #42)
+  useEffect(() => {
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
 
   useEffect(() => {
     if (googleToken && request.id) {
@@ -66,6 +75,20 @@ export default function DetailModal({ request, onClose, onUpdateStatus, onDelete
     }
   };
 
+  const handleStatusUpdate = async (status: RequestStatus) => {
+    setIsSyncing(true);
+    setSyncError('');
+    try {
+      await onUpdateStatus(status);
+      onClose();
+    } catch (err: any) {
+      console.error("Failed to update request status:", err);
+      setSyncError(err.message || String(err) || "Failed to sync status change. Please try again.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
@@ -89,6 +112,16 @@ export default function DetailModal({ request, onClose, onUpdateStatus, onDelete
           </div>
 
           <div className="p-4 md:p-6 overflow-y-auto flex-1 space-y-4 md:space-y-6 bg-white">
+              {syncError && (
+                 <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 flex items-start gap-2.5 text-xs text-rose-800 font-medium">
+                   <AlertTriangle size={16} className="text-rose-600 shrink-0 mt-0.5" />
+                   <div className="flex-1">
+                     <p className="font-bold">Synchronization / Administrative Action Error</p>
+                     <p className="opacity-95 leading-normal mt-0.5">{syncError}</p>
+                   </div>
+                 </div>
+              )}
+
               {request.isUrgent && (
                   <div className="bg-red-50 p-3 rounded-lg border border-red-100 flex items-center gap-2">
                       <AlertTriangle size={16} className="text-red-500 shrink-0" />
@@ -277,7 +310,7 @@ export default function DetailModal({ request, onClose, onUpdateStatus, onDelete
               )}
           </div>
 
-          <div className="px-4 py-3 md:px-6 md:py-4 border-t border-gray-100 bg-gray-50/35 flex flex-row items-center justify-end gap-2 shrink-0">
+          <div className="px-4 py-3 md:px-6 md:py-4 border-t border-gray-100 bg-gray-50/35 flex flex-wrap md:flex-nowrap items-center justify-end gap-2 shrink-0">
              {onDelete && (
                 <div className="mr-auto flex items-center gap-1 overflow-hidden min-h-[36px]">
                    <AnimatePresence mode="wait">
@@ -328,16 +361,32 @@ export default function DetailModal({ request, onClose, onUpdateStatus, onDelete
              <button onClick={onClose} className="px-4 py-1.5 font-medium text-xs text-gray-600 hover:text-gray-900 bg-transparent border border-gray-300 rounded-lg transition-colors">
                 Close
              </button>
-             {request.status === 'Pending' && (
-                 <>
-                    <button onClick={() => { onUpdateStatus('Declined'); onClose(); }} className="px-4 py-1.5 font-medium text-xs text-red-600 hover:bg-red-50 border border-red-200 rounded-lg transition-colors">
-                       Decline
-                    </button>
-                    <button onClick={() => { onUpdateStatus('Approved'); onClose(); }} className="px-4 py-1.5 font-medium text-xs bg-[#008FD5] text-white hover:bg-[#008FD5]/90 rounded-lg transition-colors shadow-sm">
-                       Approve Request
-                    </button>
-                 </>
-             )}
+              {request.status === 'Pending' && (
+                  <>
+                     <button 
+                       disabled={isSyncing}
+                       onClick={() => handleStatusUpdate('Declined')} 
+                       className="px-4 py-1.5 font-medium text-xs text-red-600 hover:bg-red-50 border border-red-200 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                     >
+                        {isSyncing && <Loader2 size={12} className="animate-spin text-red-600" />}
+                        <span>Decline</span>
+                     </button>
+                     <button 
+                       disabled={isSyncing}
+                       onClick={() => handleStatusUpdate('Approved')} 
+                       className="px-4 py-1.5 font-medium text-xs bg-[#008FD5] text-white hover:bg-[#008FD5]/90 rounded-lg transition-colors shadow-sm disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                     >
+                        {isSyncing ? (
+                          <>
+                            <Loader2 size={12} className="animate-spin text-white" />
+                            <span>Approving & Syncing...</span>
+                          </>
+                        ) : (
+                          <span>Approve Request</span>
+                        )}
+                     </button>
+                  </>
+              )}
           </div>
        </motion.div>
     </motion.div>

@@ -19,11 +19,13 @@ export function getDurationInMinutes(durationStr: string): number {
   return 60; // default 1 hour
 }
 
-// Helper to convert to Local ISO string (YYYY-MM-DDTHH:MM:SS) 
-// without UTC offset representation, paired with timezone.
-function getLocalISOString(date: Date): string {
+// Helper to convert to AST ISO string (YYYY-MM-DDTHH:MM:SS+03:00) 
+// without UTC browser timezone shifts.
+function getASTISOString(date: Date): string {
+  // Riyadh is UTC+3. Add 3 hours to the UTC epoch to represent local time values
+  const localDate = new Date(date.getTime() + 3 * 3600 * 1000);
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  return `${localDate.getUTCFullYear()}-${pad(localDate.getUTCMonth() + 1)}-${pad(localDate.getUTCDate())}T${pad(localDate.getUTCHours())}:${pad(localDate.getUTCMinutes())}:${pad(localDate.getUTCSeconds())}+03:00`;
 }
 
 /**
@@ -148,7 +150,7 @@ export async function syncToGoogleCalendar(
     prefDate = `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth() + 1)}-${pad(tomorrow.getDate())}`;
   }
 
-  const startDateTimeStr = `${prefDate}T${prefTime}:00`;
+  const startDateTimeStr = `${prefDate}T${prefTime}:00+03:00`;
   const startDate = new Date(startDateTimeStr);
   
   // Calculate end time dynamically
@@ -162,9 +164,9 @@ export async function syncToGoogleCalendar(
   const durationMin = getDurationInMinutes(expectedDuration);
   const endDate = new Date(startDate.getTime() + durationMin * 60000);
 
-  const startISO = getLocalISOString(startDate);
-  const endISO = getLocalISOString(endDate);
-  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  const startISO = getASTISOString(startDate);
+  const endISO = getASTISOString(endDate);
+  const userTimezone = 'Asia/Riyadh';
 
   // Build high-ROI meeting description
   const descriptionLines = [

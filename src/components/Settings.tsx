@@ -3,6 +3,7 @@ import { Save, Loader2, AlertCircle, Clock, ShieldCheck, Key, RefreshCw, Unlink,
 import { motion, AnimatePresence } from 'motion/react';
 import { getSettings, saveSettings, getGoogleCredentials, saveGoogleCredentials, BlackoutDate, SettingsData } from '../lib/db';
 import { exchangeCodeForRefreshToken, getOrRefreshGoogleToken } from '../lib/googleOAuthRefresh';
+import { safeCopyText } from '../lib/utils';
 
 interface ToggleProps {
   checked: boolean;
@@ -255,7 +256,7 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-6 space-y-8">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-0 py-6 space-y-8">
       <div>
         <h1 className="text-2xl font-bold font-sans text-[#0B1F33] tracking-tight">System Settings</h1>
         <p className="text-sm text-[#6B7280] mt-1">Manage global system configurations, availability windows, and background Google connections.</p>
@@ -307,6 +308,19 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
                  <span>Start hour must be explicitly before end hour.</span>
                </div>
             )}
+
+            {/* Production Domain Input for QR Code mapping */}
+            <div className="border-t border-slate-100 pt-5 space-y-2">
+              <label className="block text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Production URL / Custom Domain</label>
+              <input
+                type="url"
+                placeholder="e.g. https://preci-form.vercel.app"
+                value={settings.productionUrl || ''}
+                onChange={e => setSettings({...settings, productionUrl: e.target.value})}
+                className="w-full bg-[#F8FAFC] border border-[#E5E7EB] text-[#111827] rounded-xl px-4 py-3 focus:outline-none focus:border-[#008FD5] transition-all text-xs"
+              />
+              <p className="text-[10px] text-gray-400 font-medium">Used for public links and QR code generation, allowing visitors to scan and access your portal seamlessly when running local development testing.</p>
+            </div>
           </div>
         </div>
 
@@ -612,7 +626,7 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/?settings=true`);
+                  safeCopyText(`${window.location.origin}/?settings=true`);
                   setCopiedRedirectUri(true);
                   setTimeout(() => setCopiedRedirectUri(false), 2500);
                 }}

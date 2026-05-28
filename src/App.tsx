@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PublicForm from './components/PublicForm';
 import Dashboard from './components/Dashboard';
 import FormManager from './components/FormManager';
@@ -17,11 +17,12 @@ import WhatsAppDispatch from './components/WhatsAppDispatch';
 import RequestDetail from './components/RequestDetail';
 import { EncryptedText } from './components/ui/encrypted-text';
 import { BackgroundBeams } from './components/ui/background-beams';
+import { safeCopyText } from './lib/utils';
 
 import { initAuth, googleSignIn, googleLogout } from './lib/googleAuth';
 import { syncFreeBusyToCache } from './lib/googleCalendar';
 import { User } from 'firebase/auth';
-import { getForms, getRequests, addRequest as dbAddRequest, updateRequestStatus, seedRequests, deleteRequest, subscribeRequests, updateRequestLinks, getSettings } from './lib/db';
+import { getForms, getRequests, addRequest as dbAddRequest, updateRequestStatus, seedRequests, deleteRequest, subscribeRequests, updateRequestLinks, getSettings, ensureDefaultFormExists } from './lib/db';
 import { getOrRefreshGoogleToken } from './lib/googleOAuthRefresh';
 
 export default function App() {
@@ -65,12 +66,12 @@ export default function App() {
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'warning' | 'error' } | null>(null);
 
-  const showToast = (message: string, type: 'success' | 'warning' | 'error' = 'success', duration = 8000) => {
+  const showToast = useCallback((message: string, type: 'success' | 'warning' | 'error' = 'success', duration = 8000) => {
     setToast({ message, type });
     setTimeout(() => {
       setToast(prev => prev && prev.message === message ? null : prev);
     }, duration);
-  };
+  }, []);
   
   // Public Form Template Data
   const [publicFormTemplate, setPublicFormTemplate] = useState<any | null>(null);
@@ -81,7 +82,7 @@ export default function App() {
   const [loginError, setLoginError] = useState('');
   const [hoveredPath, setHoveredPath] = useState<string | null>(null);
   const [isShaking, setIsShaking] = useState(false);
-
+  const [productionUrl, setProductionUrl] = useState('');
 
   const [googleUser, setGoogleUser] = useState<User | null>(null);
   const [googleToken, setGoogleToken] = useState<string | null>(null);
@@ -136,6 +137,27 @@ export default function App() {
       setIsLoggedIn(true);
     }
   }, []);
+
+  // Load configuration and seed default form template once on app boot (Issue #18 & #29)
+  useEffect(() => {
+    ensureDefaultFormExists();
+    getSettings().then(s => {
+      if (s && s.productionUrl) {
+        setProductionUrl(s.productionUrl);
+      }
+    }).catch(err => console.warn("Failed to load production URL on boot:", err));
+  }, []);
+
+  // Prevent background scroll when QR Code modal is active (Issue #43)
+  useEffect(() => {
+    if (isQrModalOpen) {
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
+    }
+  }, [isQrModalOpen]);
 
   useEffect(() => {
     if (isPublicForm) {
@@ -200,8 +222,10 @@ export default function App() {
 
   // Copy public form URL containing the clean route
   const handleCopyLink = () => {
-    const publicUrl = `${window.location.origin}/request`;
-    navigator.clipboard.writeText(publicUrl);
+    const publicUrl = productionUrl 
+      ? `${productionUrl.replace(/\/+$/, '')}/request` 
+      : `${window.location.origin}/request`;
+    safeCopyText(publicUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -301,60 +325,98 @@ export default function App() {
 
   const updateStatus = async (id: string, status: RequestStatus) => {
     // Optimistic local state update
+    const originalRequests = [...requests];
     const reqToUpdate = requests.find(r => r.id === id);
     setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r));
 
     try {
       await updateRequestStatus(id, status);
-      if (googleToken && reqToUpdate) {
+
+      // SILENT TOKEN AUTO-REFRESH (Issue #10)
+      const activeToken = await getOrRefreshGoogleToken() || googleToken;
+
+      if (activeToken && reqToUpdate) {
         if (status === 'Approved') {
           // Auto-sync to Calendar and generate Meet link
-          import('./lib/googleCalendar').then(({ syncToGoogleCalendar, syncFreeBusyToCache }) => {
-            syncToGoogleCalendar(googleToken, { ...reqToUpdate, status }).then((syncResult) => {
-               // Re-sync availability after booking
-               syncFreeBusyToCache(googleToken);
-               
-               // Save Google Calendar and Meet links back to the database!
-               updateRequestLinks(id, syncResult.htmlLink || '', syncResult.hangoutLink || '');
+          const { syncToGoogleCalendar, syncFreeBusyToCache } = await import('./lib/googleCalendar');
+          try {
+            const syncResult = await syncToGoogleCalendar(activeToken, { ...reqToUpdate, status });
+            // Re-sync availability after booking
+            syncFreeBusyToCache(activeToken);
+            
+            // Save Google Calendar and Meet links back to the database!
+            await updateRequestLinks(id, syncResult.htmlLink || '', syncResult.hangoutLink || '');
 
-               // Send Gmail auto-reply with Meet link
-               import('./lib/gmailAutoReply').then(({ sendAutoReply }) => {
-                 sendAutoReply(googleToken, reqToUpdate, status, syncResult.hangoutLink);
-               });
-               showToast('Successfully synced to Google Calendar and sent confirmation!', 'success');
-            }).catch(err => {
-               showToast(`Google Calendar Auto-Sync failed: ${err.message}. Please re-connect your calendar.`, 'error');
-            });
-          });
+            // Send Gmail auto-reply with Meet link
+            const { sendAutoReply } = await import('./lib/gmailAutoReply');
+            try {
+              await sendAutoReply(activeToken, reqToUpdate, status, syncResult.hangoutLink);
+              showToast('Successfully synced to Google Calendar and sent confirmation!', 'success');
+            } catch (emailErr: any) {
+              console.error('Confirmation email failed to send:', emailErr);
+              showToast(`Google Calendar synced, but email failed: ${emailErr.message || emailErr}`, 'warning');
+            }
+          } catch (err: any) {
+            console.error('Google Calendar Auto-Sync failed:', err);
+            showToast(`Google Calendar Auto-Sync failed: ${err.message || err}. Reverted status to Pending.`, 'error');
+            // DEFENSIVE ROLLBACK (Issue #12)
+            await updateRequestStatus(id, 'Pending');
+            setRequests(prev => prev.map(r => r.id === id ? { ...r, status: 'Pending' as RequestStatus } : r));
+            throw err; // Propagate error so calling modal can catch it
+          }
         } else if (status === 'Declined') {
           // Send decline auto-reply
-          import('./lib/gmailAutoReply').then(({ sendAutoReply }) => {
-            sendAutoReply(googleToken, reqToUpdate, status);
-          });
+          const { sendAutoReply } = await import('./lib/gmailAutoReply');
+          try {
+            await sendAutoReply(activeToken, reqToUpdate, status);
+            showToast('Request successfully declined and notification sent!', 'success');
+          } catch (emailErr: any) {
+            console.error('Decline email failed to send:', emailErr);
+            showToast(`Status updated to Declined, but email failed: ${emailErr.message || emailErr}`, 'warning');
+          }
         }
       }
     } catch (err) {
       console.error('Failed to sync status update:', err);
+      // DEFENSIVE ROLLBACK (Issue #11)
+      setRequests(originalRequests);
+      showToast('Database update failed. Reverted status change.', 'error');
+      throw err; // Propagate error
     }
   };
 
   const handleSeedDemoData = async () => {
+    const hasRealRequests = requests.some(r => !r.id.startsWith('seed-'));
+    const message = hasRealRequests 
+      ? "Warning: Seeding demo data will overwrite all existing requests (including your real production booking data). Are you absolutely sure you want to proceed?" 
+      : "Are you sure you want to seed 2 demo requests into your dashboard?";
+      
+    if (!window.confirm(message)) {
+      return;
+    }
+
     try {
       const sortedSeed = await seedRequests();
       setRequests(sortedSeed);
+      showToast("Demo requests successfully seeded to dashboard!", "success");
     } catch (err) {
       console.error('Failed to seed system demo requests:', err);
+      showToast("Failed to seed demo data.", "error");
     }
   };
 
   const handleDeleteRequest = async (id: string) => {
     // Optimistic local state update
+    const originalRequests = [...requests];
     setRequests(prev => prev.filter(r => r.id !== id));
 
     try {
       await deleteRequest(id);
     } catch (err) {
       console.error('Failed to sync deletion:', err);
+      // DEFENSIVE ROLLBACK (Issue #11)
+      setRequests(originalRequests);
+      showToast('Database deletion failed. Reverted change.', 'error');
     }
   };
 
@@ -364,7 +426,7 @@ export default function App() {
       setIsLoggedIn(true);
       sessionStorage.setItem('preci_admin_logged_in', 'true');
       setLoginError('');
-      if (path === '/' || path === '/request' || path === '') {
+      if (path === '/' || path === '/request' || path === '' || path === '/dashboard') {
         navigate('/dashboard');
       }
     } else {
@@ -388,7 +450,7 @@ export default function App() {
         sessionStorage.setItem('preci_admin_logged_in', 'true');
         
         showToast("Logged in and connected to Google Calendar successfully!", 'success');
-        if (path === '/' || path === '/request' || path === '') {
+        if (path === '/' || path === '/request' || path === '' || path === '/dashboard') {
           navigate('/dashboard');
         }
       }
@@ -596,12 +658,12 @@ export default function App() {
   if (isRequestDetail && detailRequestId) {
     return (
       <div className="bg-[#F8FAFC] min-h-screen flex flex-col font-body-md text-[#111827] antialiased">
-        <header className="bg-white/90 backdrop-blur-md top-0 z-50 shadow-sm border-b border-[#E5E7EB] w-full fixed">
+        <header className="bg-white/90 backdrop-blur-md top-0 z-50 shadow-sm border-b border-[#E5E7EB] w-full fixed pt-safe">
           <div className="flex justify-between items-center w-full px-lg py-3 max-w-container-max mx-auto">
             <CompanyLogo size="sm" className="md:scale-105 origin-left" />
           </div>
         </header>
-        <main className="flex-1 flex flex-col items-center justify-center pt-[100px] pb-xxl px-margin-mobile md:px-lg w-full">
+        <main className="flex-1 flex flex-col items-center justify-center pt-[calc(100px+env(safe-area-inset-top,0px))] pb-xxl px-margin-mobile md:px-lg w-full">
           <RequestDetail 
             requestId={detailRequestId} 
             onBackToRequest={() => navigate('/request')} 
@@ -630,12 +692,12 @@ export default function App() {
 
     return (
       <div className="bg-[#F8FAFC] min-h-screen flex flex-col font-body-md text-[#111827] antialiased">
-        <header className="bg-white/90 backdrop-blur-md top-0 z-50 shadow-sm border-b border-[#E5E7EB] w-full fixed">
+        <header className="bg-white/90 backdrop-blur-md top-0 z-50 shadow-sm border-b border-[#E5E7EB] w-full fixed pt-safe">
           <div className="flex justify-between items-center w-full px-lg py-3 max-w-container-max mx-auto">
             <CompanyLogo size="sm" className="md:scale-105 origin-left" />
           </div>
         </header>
-        <main className="flex-1 flex flex-col items-center justify-center pt-[100px] pb-xxl px-margin-mobile md:px-lg w-full">
+        <main className="flex-1 flex flex-col items-center justify-center pt-[calc(100px+env(safe-area-inset-top,0px))] pb-xxl px-margin-mobile md:px-lg w-full">
           <PublicForm template={publicFormTemplate} onSubmit={addRequest} />
         </main>
       </div>
@@ -808,7 +870,7 @@ export default function App() {
       {/* Main Content Wrapper */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
         {/* TopNavBar */}
-        <header className="flex justify-between items-center w-full px-lg py-4 shadow-sm border-b border-[#E5E7EB] bg-white z-30 shrink-0">
+        <header className="flex justify-between items-center w-full px-lg py-4 pt-safe shadow-sm border-b border-[#E5E7EB] bg-white z-30 shrink-0">
           <div className="md:hidden">
             <CompanyLogo size="sm" />
           </div>
@@ -911,7 +973,7 @@ export default function App() {
         </header>
 
         {/* Main Canvas with beautiful page transitions */}
-        <main className="flex-1 overflow-y-auto bg-[#F8FAFC] p-margin-mobile md:p-xl lg:p-xxl relative">
+        <main className="flex-1 overflow-y-auto bg-[#F8FAFC] p-margin-mobile md:p-xl lg:p-xxl pb-32 md:pb-xl relative scroll-touch">
           <AnimatePresence mode="wait">
             <motion.div
               key={path}
@@ -1053,7 +1115,7 @@ export default function App() {
                 {/* QR Code container with stylized border */}
                 <div className="my-5 p-4 bg-gray-50 rounded-2xl border border-gray-100 shadow-inner flex items-center justify-center">
                   <QRCodeSVG 
-                    value={`${window.location.origin}/request`} 
+                    value={productionUrl ? `${productionUrl.replace(/\/+$/, '')}/request` : `${window.location.origin}/request`} 
                     size={160} 
                     includeMargin={true}
                     fgColor="#0B1F33"
@@ -1063,7 +1125,7 @@ export default function App() {
                 </div>
 
                 <div className="w-full bg-[#F3F4F6] p-2.5 rounded-lg text-[11px] font-mono select-all text-[#374151] break-all border border-[#E5E7EB] mb-4 text-center">
-                  {`${window.location.origin}/request`}
+                  {productionUrl ? `${productionUrl.replace(/\/+$/, '')}/request` : `${window.location.origin}/request`}
                 </div>
                 
                 <div className="flex gap-2 w-full">
