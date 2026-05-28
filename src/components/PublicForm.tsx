@@ -975,8 +975,8 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
               <h1 className="font-sans text-2xl md:text-3xl font-black text-[#0B1F33] tracking-tight">
                 <EncryptedText 
                   text={template.title} 
-                  revealDelayMs={50} 
-                  flipDelayMs={40}
+                  revealDelayMs={60} 
+                  flipDelayMs={48}
                   encryptedClassName="text-slate-400 font-mono"
                   revealedClassName="text-[#0B1F33]"
                 />
