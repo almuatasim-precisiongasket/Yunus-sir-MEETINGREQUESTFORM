@@ -560,7 +560,7 @@ export default function App() {
             <CompanyLogo size="sm" className="md:scale-105 origin-left" />
           </div>
         </header>
-        <main className="flex-1 flex items-center justify-center pt-[100px] pb-xxl px-margin-mobile md:px-lg w-full">
+        <main className="flex-1 flex flex-col items-center justify-center pt-[100px] pb-xxl px-margin-mobile md:px-lg w-full">
           <RequestDetail 
             requestId={detailRequestId} 
             onBackToRequest={() => navigate('/request')} 
@@ -594,7 +594,7 @@ export default function App() {
             <CompanyLogo size="sm" className="md:scale-105 origin-left" />
           </div>
         </header>
-        <main className="flex-1 flex items-center justify-center pt-[100px] pb-xxl px-margin-mobile md:px-lg w-full">
+        <main className="flex-1 flex flex-col items-center justify-center pt-[100px] pb-xxl px-margin-mobile md:px-lg w-full">
           <PublicForm template={publicFormTemplate} onSubmit={addRequest} />
         </main>
       </div>
