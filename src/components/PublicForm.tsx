@@ -9,6 +9,7 @@ import { safeCopyText } from '../lib/utils';
 import { ShinyText } from './ui/ShinyText';
 import { Magnet } from './ui/Magnet';
 import { Aurora } from './ui/Aurora';
+import { GlowCard } from './ui/GlowCard';
 
 interface CustomDatePickerProps {
   value: string;
@@ -1105,8 +1106,9 @@ function parseDuration(durationStr: string): number {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -15 }}
-          className="w-full max-w-[840px] bg-white bg-texture rounded-2xl shadow-ambient border border-slate-200/50 p-margin-mobile sm:p-lg md:p-xxl mt-lg mb-xxl relative font-sans text-left overflow-hidden"
+          className="w-full max-w-[840px] mt-lg mb-xxl relative"
         >
+          <GlowCard className="bg-white bg-texture rounded-2xl shadow-ambient border border-slate-200/50 p-margin-mobile sm:p-lg md:p-xxl font-sans text-left overflow-hidden">
           {/* Ultra-Thin High-ROI Progress Bar */}
           <div className="absolute top-0 left-0 right-0 h-[3px] bg-slate-100/60 rounded-t-2xl overflow-hidden">
             <motion.div 
@@ -1332,6 +1334,7 @@ function parseDuration(durationStr: string): number {
               </div>
             </div>
           </form>
+          </GlowCard>
         </motion.div>
       )}
     </AnimatePresence>
