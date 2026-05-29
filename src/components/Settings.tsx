@@ -5,6 +5,7 @@ import { getSettings, saveSettings, getGoogleCredentials, saveGoogleCredentials,
 import { exchangeCodeForRefreshToken, getOrRefreshGoogleToken } from '../lib/googleOAuthRefresh';
 import { safeCopyText } from '../lib/utils';
 import PWAInstallCard from './PWAInstallCard';
+import { GlowCard } from './ui/GlowCard';
 
 interface ToggleProps {
   checked: boolean;
@@ -266,7 +267,7 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
 
       {/* CARD 1: Business Hours */}
       <form onSubmit={handleSaveSettings} className="space-y-6">
-        <div className="bg-white rounded-xl shadow-sm border border-[#E5E7EB] overflow-hidden">
+        <GlowCard className="bg-white rounded-xl shadow-sm border border-[#E5E7EB]">
           <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
             <Clock size={18} className="text-[#008FD5]" />
             <h2 className="font-bold text-[#0B1F33]">Dynamic Business Hours</h2>
@@ -324,10 +325,10 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
               <p className="text-[10px] text-gray-400 font-medium">Used for public links and QR code generation, allowing visitors to scan and access your portal seamlessly when running local development testing.</p>
             </div>
           </div>
-        </div>
+        </GlowCard>
 
         {/* CARD 2: Blackout Dates & Holidays Manager */}
-        <div className="bg-white rounded-xl shadow-sm border border-[#E5E7EB] overflow-hidden">
+        <GlowCard className="bg-white rounded-xl shadow-sm border border-[#E5E7EB]">
           <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
             <CalendarX2 size={18} className="text-[#008FD5]" />
             <h2 className="font-bold text-[#0B1F33]">Blackout Dates & Holidays</h2>
@@ -417,10 +418,10 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
               )}
             </div>
           </div>
-        </div>
+        </GlowCard>
 
         {/* CARD 3: Admin Notification Routing */}
-        <div className="bg-white rounded-xl shadow-sm border border-[#E5E7EB] overflow-hidden">
+        <GlowCard className="bg-white rounded-xl shadow-sm border border-[#E5E7EB]">
           <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
             <Mail size={18} className="text-[#008FD5]" />
             <h2 className="font-bold text-[#0B1F33]">Admin Alert & Notification Routing</h2>
@@ -522,7 +523,7 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
               </div>
             </div>
           </div>
-        </div>
+        </GlowCard>
 
         <div className="flex justify-end items-center gap-4">
           {saveStatus === 'success' && <span className="text-emerald-500 text-sm font-bold animate-pulse">Settings Saved</span>}
@@ -539,7 +540,7 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
       </form>
 
       {/* CARD 4: Permanent Google Connection */}
-      <div className="bg-white rounded-xl shadow-sm border border-[#E5E7EB] overflow-hidden">
+      <GlowCard className="bg-white rounded-xl shadow-sm border border-[#E5E7EB]">
         <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Key size={18} className="text-[#008FD5]" />
@@ -714,7 +715,7 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
             </form>
           )}
         </div>
-      </div>
+      </GlowCard>
       
       {/* PWA Utility Section */}
       <PWAInstallCard />
