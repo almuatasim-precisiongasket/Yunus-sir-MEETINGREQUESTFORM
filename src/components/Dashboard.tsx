@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { MeetingRequest, RequestStatus } from '../types';
 import DetailModal from './DetailModal';
 import { motion, AnimatePresence } from 'motion/react';
+import { GlowCard } from './ui/GlowCard';
 import { 
   Search, 
   Filter, 
@@ -154,14 +155,14 @@ export default function Dashboard({ requests, onUpdateStatus, onSeedDemoData, on
             <p className="font-body-sm md:font-body-md text-xs md:text-body-md text-on-surface-variant">Manage and review form submission requests</p>
         </div>
         <div className="grid grid-cols-3 gap-3 w-full lg:flex lg:w-auto lg:gap-lg items-center">
-            <div className="flex-1 lg:w-32 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm text-center flex flex-col justify-center min-h-[85px]">
+            <GlowCard className="flex-1 lg:w-32 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm text-center min-h-[85px]">
                 <p className="text-[10px] md:text-[11px] text-[#6B7280] mb-1 font-bold uppercase tracking-wider">Total</p>
                 <p className="text-3xl font-sans font-black text-[#008FD5] leading-none">{requests.length}</p>
-            </div>
-            <div className="flex-1 lg:w-32 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm text-center flex flex-col justify-center min-h-[85px]">
+            </GlowCard>
+            <GlowCard className="flex-1 lg:w-32 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm text-center min-h-[85px]">
                 <p className="text-[10px] md:text-[11px] text-[#6B7280] mb-1 font-bold uppercase tracking-wider">Pending</p>
                 <p className="text-3xl font-sans font-black text-[#111827] leading-none">{pendingCount}</p>
-            </div>
+            </GlowCard>
             {onShareLink && (
               <button 
                 onClick={onShareLink}
