@@ -962,7 +962,7 @@ function parseDuration(durationStr: string): number {
 
             <h1 className="font-sans text-2xl md:text-3xl font-black text-[#0B1F33] tracking-tight mb-3">Request Received</h1>
             <p className="font-sans text-sm md:text-base text-gray-500 mb-8 max-w-[420px] leading-relaxed">
-              {template.successMessage || 'Your executive request has been safely cataloged and is queued for verification.'}
+              {template.successMessage || 'Your meeting request has been safely cataloged and is queued for verification.'}
             </p>
 
             {/* Verified Receipt Detail Card */}
@@ -1061,7 +1061,7 @@ function parseDuration(durationStr: string): number {
 
               <div className="pt-2.5 border-t border-slate-200/50 flex items-center gap-1.5 text-[10px] text-slate-500">
                 <ShieldCheck size={12} className="text-emerald-500 shrink-0" />
-                <span>Precision Engineering Group — Secure Executive Queue</span>
+                <span>Precision Engineering Group — Secure Meeting Queue</span>
               </div>
             </div>
 
@@ -1135,7 +1135,7 @@ function parseDuration(durationStr: string): number {
                 }}
               >
                 <EncryptedText 
-                  text={template.description || "Welcome to PRECI FORM. Our coordination office securely reviews and manages all incoming executive scheduling requests. Please provide accurate details to help us evaluate and coordinate your meeting efficiently."} 
+                  text={template.description || "Welcome to PRECI FORM. Our coordination office securely reviews and manages all incoming scheduling requests. Please provide accurate details to help us evaluate and coordinate your meeting efficiently."} 
                   revealDelayMs={6} 
                   flipDelayMs={12}
                 />

@@ -42,8 +42,8 @@ export const db = firestoreDb;
 const defaultForm: FormTemplate = {
   id: "form-default",
   title: "Meeting Request Form",
-  description: "Welcome to PRECI FORM. Our coordination office securely reviews and manages all incoming executive scheduling requests. Please provide accurate details to help us evaluate and coordinate your meeting efficiently.",
-  successMessage: "Your meeting proposal has been submitted successfully and is now awaiting executive review.",
+  description: "Welcome to PRECI FORM. Our coordination office securely reviews and manages all incoming scheduling requests. Please provide accurate details to help us evaluate and coordinate your meeting efficiently.",
+  successMessage: "Your meeting proposal has been submitted successfully and is now awaiting review.",
   createdAt: Date.now(),
   fields: [
     { id: "fullName", label: "Name", type: "text", required: true, isSystem: true, placeholder: "Enter your full name" },

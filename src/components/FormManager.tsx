@@ -57,7 +57,7 @@ export default function FormManager() {
       : `form-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
     const newForm: FormTemplate = {
       id: newId,
-      title: 'New Executive Intake Form',
+      title: 'New Intake Form',
       description: 'Please provide the details below.',
       successMessage: 'Your request has been safely cataloged.',
       createdAt: Date.now(),

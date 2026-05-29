@@ -257,11 +257,11 @@ export default function RequestDetail({ requestId, onBackToRequest, onBackToDash
                 </div>
                 <div className="space-y-1">
                   <h3 className="text-xs font-black text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
-                    <span>Pending Executive Review</span>
+                    <span>Pending Review</span>
                     <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
                   </h3>
                   <p className="text-xs text-amber-800 leading-relaxed font-sans max-w-xl">
-                    This scheduling request has been logged successfully and is currently under strategic review by our executive team. Status updates, confirmations, and meeting coordinates will publish automatically here.
+                    This scheduling request has been logged successfully and is currently under review. Status updates, confirmations, and meeting coordinates will publish automatically here.
                   </p>
                 </div>
               </motion.div>
@@ -289,7 +289,7 @@ export default function RequestDetail({ requestId, onBackToRequest, onBackToDash
                       <Sparkles size={11} className="text-emerald-600 animate-pulse" />
                     </h3>
                     <p className="text-xs text-emerald-800 leading-relaxed font-sans max-w-xl">
-                      Congratulations! Your meeting request has been authorized and securely synchronized with the executive calendar schedule. All coordinates are published below.
+                      Congratulations! Your meeting request has been authorized and securely synchronized with the calendar schedule. All coordinates are published below.
                     </p>
                   </div>
                 </div>

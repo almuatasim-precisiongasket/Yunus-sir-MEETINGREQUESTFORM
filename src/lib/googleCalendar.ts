@@ -170,7 +170,7 @@ export async function syncToGoogleCalendar(
 
   // Build high-ROI meeting description
   const descriptionLines = [
-    `Precision Engineering Group — Executive Meeting`,
+    `Precision Engineering Group — Meeting`,
     `-----------------------------------------------`,
     `Requester: ${String(request.responses?.fullName || '')}`,
     `Company: ${String(request.responses?.company || '') || 'Individual Request'}`,
