@@ -92,13 +92,6 @@ export const DotGrid: React.FC<DotGridProps> = ({
   const baseRgb = useMemo(() => hexToRgb(baseColor), [baseColor]);
   const activeRgb = useMemo(() => hexToRgb(activeColor), [activeColor]);
 
-  const circlePath = useMemo(() => {
-    if (typeof window === 'undefined' || !window.Path2D) return null;
-    const p = new window.Path2D();
-    p.arc(0, 0, dotSize / 2, 0, Math.PI * 2);
-    return p;
-  }, [dotSize]);
-
   const buildGrid = useCallback(() => {
     const wrap = wrapperRef.current;
     const canvas = canvasRef.current;
@@ -139,10 +132,9 @@ export const DotGrid: React.FC<DotGridProps> = ({
   }, [dotSize, gap]);
 
   useEffect(() => {
-    if (!circlePath) return;
-
     let rafId: number;
     const proxSq = proximity * proximity;
+    const radius = dotSize / 2;
 
     const draw = () => {
       const canvas = canvasRef.current;
@@ -170,11 +162,10 @@ export const DotGrid: React.FC<DotGridProps> = ({
           fillStyle = `rgb(${r},${g},${b})`;
         }
 
-        ctx.save();
-        ctx.translate(ox, oy);
+        ctx.beginPath();
+        ctx.arc(ox, oy, radius, 0, Math.PI * 2);
         ctx.fillStyle = fillStyle;
-        ctx.fill(circlePath);
-        ctx.restore();
+        ctx.fill();
       }
 
       rafId = requestAnimationFrame(draw);
@@ -182,7 +173,7 @@ export const DotGrid: React.FC<DotGridProps> = ({
 
     draw();
     return () => cancelAnimationFrame(rafId);
-  }, [proximity, baseColor, activeRgb, baseRgb, circlePath]);
+  }, [proximity, baseColor, activeRgb, baseRgb, dotSize]);
 
   useEffect(() => {
     buildGrid();

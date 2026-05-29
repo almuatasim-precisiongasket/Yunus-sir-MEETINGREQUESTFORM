@@ -1,4 +1,7 @@
 import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   getFirestore,
   collection,
   doc,
@@ -21,7 +24,20 @@ try {
 } catch (e) {
   app = initializeApp(firebaseConfig);
 }
-export const db = getFirestore(app);
+
+let firestoreDb;
+try {
+  firestoreDb = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+      tabManager: persistentMultipleTabManager()
+    })
+  });
+} catch (e) {
+  console.warn("Firestore already initialized, falling back to standard instance.", e);
+  firestoreDb = getFirestore(app);
+}
+
+export const db = firestoreDb;
 
 const defaultForm: FormTemplate = {
   id: "form-default",
@@ -45,21 +61,36 @@ const defaultForm: FormTemplate = {
 
 // --- FALLBACK IN-MEMORY/LOCAL STORAGE FOR ZERO FRICTION ---
 const isLocalStorageAvailable = typeof window !== 'undefined' && window.localStorage;
+const memoryCache: Record<string, any> = {};
 
 function getLocal<T>(key: string, fallback: T): T {
+  if (memoryCache[key] !== undefined) {
+    return memoryCache[key];
+  }
   if (!isLocalStorageAvailable) return fallback;
   const val = localStorage.getItem(key);
   if (!val) return fallback;
   try {
-    return JSON.parse(val);
+    const parsed = JSON.parse(val);
+    memoryCache[key] = parsed;
+    return parsed;
   } catch (e) {
     return fallback;
   }
 }
 
 function setLocal<T>(key: string, val: T) {
+  memoryCache[key] = val;
   if (!isLocalStorageAvailable) return;
-  localStorage.setItem(key, JSON.stringify(val));
+  try {
+    let serializedVal: any = val;
+    if (key === 'meeting_requests' && Array.isArray(val) && val.length > 50) {
+      serializedVal = val.slice(0, 50);
+    }
+    localStorage.setItem(key, JSON.stringify(serializedVal));
+  } catch (e) {
+    console.warn("localStorage write failed:", e);
+  }
 }
 
 // --- API IMPLEMENTATION ---
@@ -386,20 +417,30 @@ export interface GoogleCredentials {
   tokenExpiry?: number;
 }
 
+let cachedGoogleCredentials: GoogleCredentials | null = null;
+
 export async function getGoogleCredentials(): Promise<GoogleCredentials | null> {
+  if (cachedGoogleCredentials) {
+    return cachedGoogleCredentials;
+  }
   try {
     const docRef = doc(db, 'settings', 'google_auth');
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      return docSnap.data() as GoogleCredentials;
+      const data = docSnap.data() as GoogleCredentials;
+      cachedGoogleCredentials = data;
+      return data;
     }
   } catch (err) {
     console.warn('Firestore getGoogleCredentials error, using local fallback:', err);
   }
-  return getLocal<GoogleCredentials | null>('google_credentials', null);
+  const localCreds = getLocal<GoogleCredentials | null>('google_credentials', null);
+  cachedGoogleCredentials = localCreds;
+  return localCreds;
 }
 
 export async function saveGoogleCredentials(creds: GoogleCredentials): Promise<void> {
+  cachedGoogleCredentials = creds;
   setLocal('google_credentials', creds);
   try {
     const docRef = doc(db, 'settings', 'google_auth');

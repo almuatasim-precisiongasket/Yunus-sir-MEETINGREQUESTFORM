@@ -73,6 +73,14 @@ export default function Dashboard({ requests, onUpdateStatus, onSeedDemoData, on
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
 
+  // Progressive list loading state (Priority 0 DOM virtualizer)
+  const [visibleCount, setVisibleCount] = useState(20);
+
+  // Stably reset progressive count when search parameters or filters change
+  useEffect(() => {
+    setVisibleCount(20);
+  }, [filter, searchQuery, sortBy]);
+
   // Fetch upcoming agenda events in real time
   useEffect(() => {
     if (googleToken) {
@@ -271,7 +279,7 @@ export default function Dashboard({ requests, onUpdateStatus, onSeedDemoData, on
                            </div>
                        </motion.div>
                    ) : (
-                       sortedAndFiltered.map((req) => (
+                       sortedAndFiltered.slice(0, visibleCount).map((req) => (
                            <motion.div 
                                key={req.id} 
                                layout
@@ -376,6 +384,17 @@ export default function Dashboard({ requests, onUpdateStatus, onSeedDemoData, on
                        ))
                    )}
                </AnimatePresence>
+               {sortedAndFiltered.length > visibleCount && (
+                  <div className="p-4 flex justify-center bg-gray-50/50">
+                    <button
+                      onClick={() => setVisibleCount((prev) => prev + 30)}
+                      className="px-6 py-2.5 bg-white hover:bg-[#008FD5] text-[#008FD5] hover:text-white rounded-xl border border-[#008FD5]/20 hover:border-[#008FD5] transition-all font-bold text-xs shadow-3xs cursor-pointer flex items-center gap-2 select-none group active:scale-[0.98]"
+                    >
+                      <span>Load More Requests</span>
+                      <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                    </button>
+                  </div>
+                )}
             </div>
           </div>
           

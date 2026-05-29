@@ -254,9 +254,46 @@ interface FloatingInputProps extends React.InputHTMLAttributes<HTMLInputElement>
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
 }
 
-function FloatingInput({ label, hasError, required, value, onFocus, onBlur, ...props }: FloatingInputProps) {
+function FloatingInput({ label, hasError, required, value, onFocus, onBlur, onChange, ...props }: FloatingInputProps) {
   const [isFocused, setIsFocused] = useState(false);
-  const isFilled = value !== undefined && value !== null && String(value).trim() !== '';
+  const [localValue, setLocalValue] = useState(value || '');
+  const changeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setLocalValue(value || '');
+  }, [value]);
+
+  const isFilled = localValue !== undefined && localValue !== null && String(localValue).trim() !== '';
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setLocalValue(val);
+    if (changeTimeoutRef.current) {
+      clearTimeout(changeTimeoutRef.current);
+    }
+    changeTimeoutRef.current = setTimeout(() => {
+      if (onChange) {
+        onChange(e);
+      }
+    }, 200);
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    setIsFocused(false);
+    if (changeTimeoutRef.current) {
+      clearTimeout(changeTimeoutRef.current);
+    }
+    if (onChange && localValue !== value) {
+      onChange(e);
+    }
+    onBlur?.(e);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (changeTimeoutRef.current) clearTimeout(changeTimeoutRef.current);
+    };
+  }, []);
 
   return (
     <div className="relative w-full flex flex-col pt-4">
@@ -274,15 +311,13 @@ function FloatingInput({ label, hasError, required, value, onFocus, onBlur, ...p
         {label} {required && <span className="text-red-500">*</span>}
       </motion.label>
       <input
-        value={value}
+        value={localValue}
         onFocus={(e) => {
           setIsFocused(true);
           onFocus?.(e);
         }}
-        onBlur={(e) => {
-          setIsFocused(false);
-          onBlur?.(e);
-        }}
+        onBlur={handleBlur}
+        onChange={handleTextChange}
         className={`w-full bg-[#F8FAFC] border text-slate-950 rounded-xl px-4 py-3 text-base md:text-sm focus:outline-none focus:bg-white focus:border-[#008FD5] focus:ring-4 focus:ring-[#008FD5]/10 hover:border-slate-300 transition-all no-tap-highlight ${
           hasError ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10' : 'border-[#E5E7EB]'
         }`}
@@ -303,9 +338,46 @@ interface FloatingTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAre
   onBlur?: React.FocusEventHandler<HTMLTextAreaElement>;
 }
 
-function FloatingTextarea({ label, hasError, required, value, onFocus, onBlur, ...props }: FloatingTextareaProps) {
+function FloatingTextarea({ label, hasError, required, value, onFocus, onBlur, onChange, ...props }: FloatingTextareaProps) {
   const [isFocused, setIsFocused] = useState(false);
-  const isFilled = value !== undefined && value !== null && String(value).trim() !== '';
+  const [localValue, setLocalValue] = useState(value || '');
+  const changeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setLocalValue(value || '');
+  }, [value]);
+
+  const isFilled = localValue !== undefined && localValue !== null && String(localValue).trim() !== '';
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setLocalValue(val);
+    if (changeTimeoutRef.current) {
+      clearTimeout(changeTimeoutRef.current);
+    }
+    changeTimeoutRef.current = setTimeout(() => {
+      if (onChange) {
+        onChange(e);
+      }
+    }, 200);
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+    setIsFocused(false);
+    if (changeTimeoutRef.current) {
+      clearTimeout(changeTimeoutRef.current);
+    }
+    if (onChange && localValue !== value) {
+      onChange(e);
+    }
+    onBlur?.(e);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (changeTimeoutRef.current) clearTimeout(changeTimeoutRef.current);
+    };
+  }, []);
 
   return (
     <div className="relative w-full flex flex-col pt-4">
@@ -323,15 +395,13 @@ function FloatingTextarea({ label, hasError, required, value, onFocus, onBlur, .
         {label} {required && <span className="text-red-500">*</span>}
       </motion.label>
       <textarea
-        value={value}
+        value={localValue}
         onFocus={(e) => {
           setIsFocused(true);
           onFocus?.(e);
         }}
-        onBlur={(e) => {
-          setIsFocused(false);
-          onBlur?.(e);
-        }}
+        onBlur={handleBlur}
+        onChange={handleTextChange}
         className={`w-full bg-[#F8FAFC] border text-slate-950 rounded-xl px-4 py-3 text-base md:text-sm focus:outline-none focus:bg-white focus:border-[#008FD5] focus:ring-4 focus:ring-[#008FD5]/10 hover:border-slate-300 transition-all resize-y no-tap-highlight ${
           hasError ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10' : 'border-[#E5E7EB]'
         }`}

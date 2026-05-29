@@ -18,6 +18,9 @@ import RequestDetail from './components/RequestDetail';
 import { EncryptedText } from './components/ui/encrypted-text';
 import { BackgroundBeams } from './components/ui/background-beams';
 import { safeCopyText } from './lib/utils';
+import { hapticFeedback } from './lib/haptics';
+import PWAUpdater from './components/PWAUpdater';
+import PWAInstallCard from './components/PWAInstallCard';
 
 import { initAuth, googleSignIn, googleLogout } from './lib/googleAuth';
 import { syncFreeBusyToCache } from './lib/googleCalendar';
@@ -38,6 +41,7 @@ export default function App() {
   }, []);
 
   const navigate = (to: string) => {
+    hapticFeedback.tap();
     window.history.pushState({}, '', to);
     setPath(to);
   };
@@ -243,7 +247,7 @@ export default function App() {
     // Only fetch/subscribe requests if we are in admin dashboard mode
     if (isPublicForm || isRequestDetail) return;
 
-    let fallbackInterval: any = null;
+    let timeoutId: any = null;
 
     // Attempt real-time Firestore subscription
     const unsubscribe = subscribeRequests(
@@ -251,23 +255,32 @@ export default function App() {
         setRequests(data);
       },
       () => {
-        // Fallback: If subscription fails or is unauthorized, use standard fallback polling
+        // Fallback: If subscription fails or is unauthorized, use standard fallback polling with exponential backoff
+        let pollCount = 0;
+        let delay = 5000;
+
         const poll = async () => {
           try {
             const data = await getRequests();
             setRequests(data);
+            
+            // Increment count and scale delay exponentially (cap at 60 seconds)
+            pollCount++;
+            if (pollCount > 5) {
+              delay = Math.min(delay * 1.5, 60000);
+            }
           } catch (e) {
             console.error('LocalStorage requests fallback failed:', e);
           }
+          timeoutId = setTimeout(poll, delay);
         };
         poll();
-        fallbackInterval = setInterval(poll, 5000);
       }
     );
 
     return () => {
       if (unsubscribe) unsubscribe();
-      if (fallbackInterval) clearInterval(fallbackInterval);
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [isPublicForm, isLoggedIn, isRequestDetail]);
 
@@ -423,6 +436,7 @@ export default function App() {
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (passcode.trim() === 'precision2026') {
+      hapticFeedback.success();
       setIsLoggedIn(true);
       sessionStorage.setItem('preci_admin_logged_in', 'true');
       setLoginError('');
@@ -430,6 +444,7 @@ export default function App() {
         navigate('/dashboard');
       }
     } else {
+      hapticFeedback.error();
       setLoginError('Invalid passcode. Access Denied.');
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 500);
@@ -478,7 +493,9 @@ export default function App() {
     // ----------------------------------------------------
     if (!isLoggedIn && !isPublicForm && !isRequestDetail) {
       return (
-        <div className="bg-[#0B1F33] min-h-screen flex flex-col justify-center items-center p-4 text-[#111827] antialiased overflow-hidden relative">
+        <>
+          <PWAUpdater />
+          <div className="bg-[#0B1F33] min-h-screen flex flex-col justify-center items-center p-4 text-[#111827] antialiased overflow-hidden relative">
           {/* Floating Drifting Background Glow 1 */}
           <motion.div 
             animate={{ 
@@ -501,7 +518,7 @@ export default function App() {
           />
 
           {/* Dynamic Laser Light Streams Vector Background Beams */}
-          <BackgroundBeams className="absolute inset-0 z-0 pointer-events-none opacity-40" />
+          <BackgroundBeams className="absolute inset-0 z-0 pointer-events-none opacity-50" />
 
           <motion.div 
             initial="hidden"
@@ -649,15 +666,18 @@ export default function App() {
             </motion.div>
           </motion.div>
         </div>
-      );
-    }
+      </>
+    );
+  }
 
     // ----------------------------------------------------
     // PUBLIC DETAILED TRACKING PORTAL (Client Portal)
     // ----------------------------------------------------
   if (isRequestDetail && detailRequestId) {
     return (
-      <div className="bg-[#F8FAFC] min-h-screen flex flex-col font-body-md text-[#111827] antialiased">
+      <>
+        <PWAUpdater />
+        <div className="bg-[#F8FAFC] min-h-screen flex flex-col font-body-md text-[#111827] antialiased">
         <header className="bg-white/90 backdrop-blur-md top-0 z-50 shadow-sm border-b border-[#E5E7EB] w-full fixed pt-safe">
           <div className="flex justify-between items-center w-full px-lg py-3 max-w-container-max mx-auto">
             <CompanyLogo size="sm" className="md:scale-105 origin-left" />
@@ -672,6 +692,7 @@ export default function App() {
           />
         </main>
       </div>
+      </>
     );
   }
 
@@ -691,7 +712,9 @@ export default function App() {
     }
 
     return (
-      <div className="bg-[#F8FAFC] min-h-screen flex flex-col font-body-md text-[#111827] antialiased">
+      <>
+        <PWAUpdater />
+        <div className="bg-[#F8FAFC] min-h-screen flex flex-col font-body-md text-[#111827] antialiased">
         <header className="bg-white/90 backdrop-blur-md top-0 z-50 shadow-sm border-b border-[#E5E7EB] w-full fixed pt-safe">
           <div className="flex justify-between items-center w-full px-lg py-3 max-w-container-max mx-auto">
             <CompanyLogo size="sm" className="md:scale-105 origin-left" />
@@ -701,6 +724,7 @@ export default function App() {
           <PublicForm template={publicFormTemplate} onSubmit={addRequest} />
         </main>
       </div>
+      </>
     );
   }
 
@@ -710,7 +734,9 @@ export default function App() {
   // ADMIN DASHBOARD & REVIEW MODE (Yunus Only)
   // ----------------------------------------------------
   return (
-    <div className="bg-[#F8FAFC] text-[#111827] font-body-md antialiased overflow-hidden flex h-screen">
+    <>
+      <PWAUpdater />
+      <div className="bg-[#F8FAFC] text-[#111827] font-body-md antialiased overflow-hidden flex h-screen">
       {/* Floating Toast Notification */}
       <AnimatePresence>
         {copied && (
@@ -1149,5 +1175,6 @@ export default function App() {
         )}
       </AnimatePresence>
     </div>
+    </>
   );
 }

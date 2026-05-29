@@ -35,6 +35,16 @@ export default function RequestDetail({ requestId, onBackToRequest, onBackToDash
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState(false);
   const [copiedMeet, setCopiedMeet] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -186,7 +196,10 @@ export default function RequestDetail({ requestId, onBackToRequest, onBackToDash
       {/* Main Glassmorphism Ticket Card */}
       <motion.div 
         style={{ transformStyle: "preserve-3d" }}
-        whileHover={{
+        whileHover={isMobile ? {
+          scale: 1.005,
+          boxShadow: "0 20px 40px rgba(11,31,51,0.08)"
+        } : {
           rotateX: 2.5,
           rotateY: -2.5,
           scale: 1.005,

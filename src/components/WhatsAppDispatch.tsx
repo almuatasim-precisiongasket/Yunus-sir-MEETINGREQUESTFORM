@@ -197,18 +197,29 @@ export default function WhatsAppDispatch() {
     }
   }, [selectedRequestId, requests]);
 
+  const [previewName, setPreviewName] = useState(recipientName);
+  const [previewCompany, setPreviewCompany] = useState(recipientCompany);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setPreviewName(recipientName);
+      setPreviewCompany(recipientCompany);
+    }, 150);
+    return () => clearTimeout(handler);
+  }, [recipientName, recipientCompany]);
+
   // Processes template body and injects actual name, company, and link values
   const getProcessedBody = (bodyText: string) => {
     let text = bodyText.replace(/\[FORM LINK\]/g, formLink);
     
-    if (recipientName && recipientName !== 'there') {
-      text = text.replace(/\[NAME\]/gi, recipientName);
+    if (previewName && previewName !== 'there') {
+      text = text.replace(/\[NAME\]/gi, previewName);
     } else {
       text = text.replace(/\[NAME\]/gi, 'there');
     }
     
-    if (recipientCompany) {
-      text = text.replace(/\[COMPANY\]/gi, recipientCompany);
+    if (previewCompany) {
+      text = text.replace(/\[COMPANY\]/gi, previewCompany);
     } else {
       text = text.replace(/from\s+\[COMPANY\]/gi, '');
       text = text.replace(/\[COMPANY\]/gi, '');

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { getSettings, saveSettings, getGoogleCredentials, saveGoogleCredentials, BlackoutDate, SettingsData } from '../lib/db';
 import { exchangeCodeForRefreshToken, getOrRefreshGoogleToken } from '../lib/googleOAuthRefresh';
 import { safeCopyText } from '../lib/utils';
+import PWAInstallCard from './PWAInstallCard';
 
 interface ToggleProps {
   checked: boolean;
@@ -45,6 +46,7 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
   // Local state for adding blackout dates
   const [newBlackoutDate, setNewBlackoutDate] = useState('');
   const [newBlackoutLabel, setNewBlackoutLabel] = useState('');
+  const [localBlackoutDates, setLocalBlackoutDates] = useState<BlackoutDate[]>([]);
 
   // Google Permanent Connection State
   const [clientId, setClientId] = useState('');
@@ -60,7 +62,12 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
   useEffect(() => {
     // 1. Fetch settings (business hours + blackout dates + admin notifications)
     getSettings()
-      .then(data => setSettings(data))
+      .then(data => {
+        setSettings(data);
+        if (data && data.blackoutDates) {
+          setLocalBlackoutDates(data.blackoutDates);
+        }
+      })
       .catch(console.error);
 
     // 2. Fetch Google credentials state
@@ -137,31 +144,21 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
       return;
     }
     
-    const exists = settings?.blackoutDates.some(bd => bd.date === newBlackoutDate);
+    const exists = localBlackoutDates.some(bd => bd.date === newBlackoutDate);
     if (exists) {
       alert('This date is already configured as a blackout day.');
       return;
     }
 
-    if (settings) {
-      const updatedDates = [...settings.blackoutDates, { date: newBlackoutDate, label: newBlackoutLabel.trim() }]
-        .sort((a, b) => a.date.localeCompare(b.date));
-      setSettings({
-        ...settings,
-        blackoutDates: updatedDates
-      });
-      setNewBlackoutDate('');
-      setNewBlackoutLabel('');
-    }
+    const updatedDates = [...localBlackoutDates, { date: newBlackoutDate, label: newBlackoutLabel.trim() }]
+      .sort((a, b) => a.date.localeCompare(b.date));
+    setLocalBlackoutDates(updatedDates);
+    setNewBlackoutDate('');
+    setNewBlackoutLabel('');
   };
 
   const handleRemoveBlackoutDate = (dateToRemove: string) => {
-    if (settings) {
-      setSettings({
-        ...settings,
-        blackoutDates: settings.blackoutDates.filter(bd => bd.date !== dateToRemove)
-      });
-    }
+    setLocalBlackoutDates(prev => prev.filter(bd => bd.date !== dateToRemove));
   };
 
   const handleSaveSettings = async (e: React.FormEvent) => {
@@ -172,7 +169,12 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
     setSaveStatus('idle');
 
     try {
-      await saveSettings(settings);
+      const mergedSettings = {
+        ...settings,
+        blackoutDates: localBlackoutDates
+      };
+      await saveSettings(mergedSettings);
+      setSettings(mergedSettings);
       setSaveStatus('success');
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch (err) {
@@ -374,16 +376,16 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
 
             {/* List of Configured Blackout Dates */}
             <div className="space-y-3">
-              <h3 className="text-xs font-bold text-[#6B7280] uppercase tracking-wider">Active Blackout Calendar ({settings.blackoutDates?.length || 0})</h3>
+              <h3 className="text-xs font-bold text-[#6B7280] uppercase tracking-wider">Active Blackout Calendar ({localBlackoutDates?.length || 0})</h3>
               
-              {!settings.blackoutDates || settings.blackoutDates.length === 0 ? (
+              {!localBlackoutDates || localBlackoutDates.length === 0 ? (
                 <div className="text-center py-6 bg-slate-50 border border-dashed border-slate-200 rounded-2xl">
                   <p className="text-xs text-slate-400 font-semibold">No blackout dates or holidays configured yet.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <AnimatePresence mode="popLayout">
-                    {settings.blackoutDates.map(bd => (
+                    {localBlackoutDates.map(bd => (
                       <motion.div
                         key={bd.date}
                         layout
@@ -713,6 +715,9 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
           )}
         </div>
       </div>
+      
+      {/* PWA Utility Section */}
+      <PWAInstallCard />
     </div>
   );
 }

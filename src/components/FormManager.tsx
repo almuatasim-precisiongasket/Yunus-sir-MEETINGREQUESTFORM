@@ -178,7 +178,7 @@ function FormEditor({ form, onSave, onCancel }: { form: FormTemplate, onSave: (f
 
   const addField = () => {
     const newField: FormField = {
-      id: 'field_' + Math.random().toString(36).substr(2, 6),
+      id: 'field_' + Math.random().toString(36).slice(2, 8),
       label: 'New Field',
       type: 'text',
       required: false,
