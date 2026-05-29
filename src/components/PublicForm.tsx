@@ -6,6 +6,9 @@ import { getCalendarAvailability, getSettings, SettingsData } from '../lib/db';
 import { EncryptedText } from './ui/encrypted-text';
 import { DotGrid } from './ui/dot-grid';
 import { safeCopyText } from '../lib/utils';
+import { ShinyText } from './ui/ShinyText';
+import { Magnet } from './ui/Magnet';
+import { Aurora } from './ui/Aurora';
 
 interface CustomDatePickerProps {
   value: string;
@@ -921,6 +924,9 @@ function parseDuration(durationStr: string): number {
 
   return (
     <div className="relative w-full flex-1 flex flex-col items-center justify-center">
+      {/* Aurora Premium Flowing Waves Background */}
+      <Aurora className="opacity-25" />
+
       {/* Background Interactive Dot Grid */}
       <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
         <DotGrid
@@ -960,7 +966,9 @@ function parseDuration(durationStr: string): number {
                 </motion.div>
             </div>
 
-            <h1 className="font-sans text-2xl md:text-3xl font-black text-[#0B1F33] tracking-tight mb-3">Request Received</h1>
+            <h1 className="font-sans text-2xl md:text-3xl font-black text-[#0B1F33] tracking-tight mb-3">
+              <ShinyText text="Request Received" speed={3} />
+            </h1>
             <p className="font-sans text-sm md:text-base text-gray-500 mb-8 max-w-[420px] leading-relaxed">
               {template.successMessage || 'Your meeting request has been safely cataloged and is queued for verification.'}
             </p>
@@ -1270,18 +1278,19 @@ function parseDuration(durationStr: string): number {
               </span>
               
               <div className="flex items-center justify-end w-full sm:w-auto h-[48px]">
-                <motion.button 
-                  type="submit" 
-                  disabled={submitState !== 'idle'}
-                  layout
-                  animate={{
-                    borderRadius: submitState === 'success' ? '9999px' : '12px',
-                    backgroundColor: submitState === 'success' ? '#10b981' : '#008FD5',
-                  }}
-                  transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-                  className="text-white font-label-md text-xs px-8 py-3.5 flex items-center justify-center gap-2 cursor-pointer focus:outline-none shrink-0 h-[48px]"
-                  style={{ overflow: 'hidden' }}
-                >
+                <Magnet>
+                  <motion.button 
+                    type="submit" 
+                    disabled={submitState !== 'idle'}
+                    layout
+                    animate={{
+                      borderRadius: submitState === 'success' ? '9999px' : '12px',
+                      backgroundColor: submitState === 'success' ? '#10b981' : '#008FD5',
+                    }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                    className="text-white font-label-md text-xs px-8 py-3.5 flex items-center justify-center gap-2 cursor-pointer focus:outline-none shrink-0 h-[48px]"
+                    style={{ overflow: 'hidden' }}
+                  >
                   <AnimatePresence mode="wait">
                     {submitState === 'idle' && (
                       <motion.div 
@@ -1319,6 +1328,7 @@ function parseDuration(durationStr: string): number {
                     )}
                   </AnimatePresence>
                 </motion.button>
+                </Magnet>
               </div>
             </div>
           </form>

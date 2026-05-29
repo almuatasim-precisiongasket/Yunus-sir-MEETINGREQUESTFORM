@@ -1,54 +1,66 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    
-    <!-- iOS Native App Capable & Translucent Status Bar -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="PRECI FORM" />
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23008FD5'/><text x='50%' y='68%' font-size='60' font-family='sans-serif' font-weight='bold' fill='white' text-anchor='middle'>P</text></svg>" />
-    
-    <!-- iOS Startup Splash Screen matching premium #0B1F33 executive dark theme -->
-    <link rel="apple-touch-startup-image" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='1024' height='1024' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230B1F33'/><circle cx='50' cy='48' r='14' fill='%23008FD5'/><text x='50' y='53.5' font-size='15' font-family='sans-serif' font-weight='bold' fill='white' text-anchor='middle'>P</text></svg>" />
-    
-    <!-- Web Manifest for standalone PWA installation -->
-    <link rel="manifest" href="/manifest.json" />
-    
-    <!-- Primary SEO Metadata -->
-    <title>Meeting Request</title>
-    <meta name="description" content="Book an appointment with Mr. Yunus. Submit your meeting proposal for review, and our coordination office will evaluate availability and coordinate scheduling accordingly." />
-    <meta name="keywords" content="meeting scheduling, scheduling assistant, Precision Engineering, booking portal, client alignment" />
-    <meta name="author" content="Precision Engineering Group" />
-    
-    <!-- Stylized Vector SVG Dynamic Favicon (Issue #30) -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23008FD5'/><text x='50%' y='68%' font-size='60' font-family='sans-serif' font-weight='bold' fill='white' text-anchor='middle'>P</text></svg>" />
-    
-    <!-- Open Graph / Social Sharing Metadata -->
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="Meeting Request" />
-    <meta property="og:description" content="Book an appointment with Mr. Yunus. Submit your meeting proposal for review, and our coordination office will evaluate availability and coordinate scheduling accordingly." />
-    <meta property="og:site_name" content="PRECI FORM" />
-    <meta property="og:image" content="https://yunus-meetingrequestform.vercel.app/logo-share.jpeg" />
-    <meta property="og:image:type" content="image/jpeg" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    
-    <!-- Twitter Social Cards -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:title" content="Meeting Request" />
-    <meta property="twitter:description" content="Book an appointment with Mr. Yunus. Submit your meeting proposal for review, and our coordination office will evaluate availability and coordinate scheduling accordingly." />
-    <meta property="twitter:image" content="https://yunus-meetingrequestform.vercel.app/logo-share.jpeg" />
 
-    <!-- Google Font Imports & Typography System -->
-    <link href="https://fonts.googleapis.com" rel="preconnect" />
-    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+  <!-- iOS Native App Capable & Translucent Status Bar -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PRECI FORM" />
+  <link rel="apple-touch-icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23008FD5'/><text x='50%' y='68%' font-size='60' font-family='sans-serif' font-weight='bold' fill='white' text-anchor='middle'>P</text></svg>" />
+
+  <!-- iOS Startup Splash Screen matching premium #0B1F33 executive dark theme -->
+  <link rel="apple-touch-startup-image"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='1024' height='1024' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230B1F33'/><circle cx='50' cy='48' r='14' fill='%23008FD5'/><text x='50' y='53.5' font-size='15' font-family='sans-serif' font-weight='bold' fill='white' text-anchor='middle'>P</text></svg>" />
+
+  <!-- Web Manifest for standalone PWA installation -->
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Primary SEO Metadata -->
+  <title>Meeting Request</title>
+  <meta name="description"
+    content="Book an appointment with Mr. Yunus. Submit your meeting proposal for review, and our coordination office will evaluate availability and coordinate scheduling accordingly." />
+  <meta name="keywords"
+    content="meeting scheduling, scheduling assistant, Precision Engineering, booking portal, client alignment" />
+  <meta name="author" content="Precision Engineering Group" />
+
+  <!-- Stylized Vector SVG Dynamic Favicon (Issue #30) -->
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23008FD5'/><text x='50%' y='68%' font-size='60' font-family='sans-serif' font-weight='bold' fill='white' text-anchor='middle'>P</text></svg>" />
+
+  <!-- Open Graph / Social Sharing Metadata -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Meeting Request Form" />
+  <meta property="og:description"
+    content="Book an appointment with Mr. Yunus. Submit your meeting proposal for review, and our coordination office will evaluate availability and coordinate scheduling accordingly." />
+  <meta property="og:site_name" content="PRECI FORM" />
+  <meta property="og:image" content="https://yunus-meetingrequestform.vercel.app/logo-share.jpeg" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <!-- Twitter Social Cards -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:title" content="Meeting Request" />
+  <meta property="twitter:description"
+    content="Book an appointment with Mr. Yunus. Submit your meeting proposal for review, and our coordination office will evaluate availability and coordinate scheduling accordingly." />
+  <meta property="twitter:image" content="https://yunus-meetingrequestform.vercel.app/logo-share.jpeg" />
+
+  <!-- Google Font Imports & Typography System -->
+  <link href="https://fonts.googleapis.com" rel="preconnect" />
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>
