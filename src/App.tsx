@@ -18,6 +18,7 @@ import RequestDetail from './components/RequestDetail';
 import { EncryptedText } from './components/ui/encrypted-text';
 import { BackgroundBeams } from './components/ui/background-beams';
 import { safeCopyText } from './lib/utils';
+import { GlowCard } from './components/ui/GlowCard';
 import { hapticFeedback } from './lib/haptics';
 import PWAUpdater from './components/PWAUpdater';
 import PWAInstallCard from './components/PWAInstallCard';
@@ -537,9 +538,10 @@ export default function App() {
                 }
               }
             }}
-            className="bg-white/95 backdrop-blur-md w-[440px] max-w-[95vw] rounded-2xl shadow-[0_20px_50px_rgba(11,31,51,0.25)] border border-white/20 overflow-hidden p-6 md:p-8 flex flex-col relative z-10"
+            className="w-[440px] max-w-[95vw] relative z-10"
             style={{ width: '440px', maxWidth: '95vw' }}
           >
+            <GlowCard className="bg-white/95 backdrop-blur-md w-full rounded-2xl shadow-[0_20px_50px_rgba(11,31,51,0.25)] border border-white/20 overflow-hidden p-6 md:p-8">
             <motion.div 
               variants={{
                 hidden: { opacity: 0, y: 15 },
@@ -664,6 +666,7 @@ export default function App() {
                 <ExternalLink size={12} />
               </button>
             </motion.div>
+            </GlowCard>
           </motion.div>
         </div>
       </>
