@@ -225,11 +225,19 @@ export default function App() {
     }
   };
 
+  const getEffectiveRequestUrl = () => {
+    const isCurrentLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const hasLocalConfig = productionUrl && (productionUrl.includes('localhost') || productionUrl.includes('127.0.0.1'));
+    
+    if (productionUrl && (!hasLocalConfig || isCurrentLocal)) {
+      return `${productionUrl.replace(/\/+$/, '')}/request`;
+    }
+    return `${window.location.origin.replace(/\/+$/, '')}/request`;
+  };
+
   // Copy public form URL containing the clean route
   const handleCopyLink = () => {
-    const publicUrl = productionUrl 
-      ? `${productionUrl.replace(/\/+$/, '')}/request` 
-      : `${window.location.origin}/request`;
+    const publicUrl = getEffectiveRequestUrl();
     safeCopyText(publicUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -304,7 +312,11 @@ export default function App() {
           const token = googleToken || refreshedToken;
 
           if (token) {
-            const baseUrl = sysSettings.productionUrl || window.location.origin;
+            const isCurrentLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const hasLocalConfig = sysSettings.productionUrl && (sysSettings.productionUrl.includes('localhost') || sysSettings.productionUrl.includes('127.0.0.1'));
+            const baseUrl = (sysSettings.productionUrl && (!hasLocalConfig || isCurrentLocal))
+              ? sysSettings.productionUrl
+              : window.location.origin;
             import('./lib/gmailAutoReply').then(({ sendAdminNotificationEmail }) => {
               sendAdminNotificationEmail(token, sysSettings.adminEmail, req, baseUrl);
             });
@@ -1143,7 +1155,7 @@ export default function App() {
                 {/* QR Code container with stylized border */}
                 <div className="my-5 p-4 bg-gray-50 rounded-2xl border border-gray-100 shadow-inner flex items-center justify-center">
                   <QRCodeSVG 
-                    value={productionUrl ? `${productionUrl.replace(/\/+$/, '')}/request` : `${window.location.origin}/request`} 
+                    value={getEffectiveRequestUrl()} 
                     size={160} 
                     includeMargin={true}
                     fgColor="#0B1F33"
@@ -1153,7 +1165,7 @@ export default function App() {
                 </div>
 
                 <div className="w-full bg-[#F3F4F6] p-2.5 rounded-lg text-[11px] font-mono select-all text-[#374151] break-all border border-[#E5E7EB] mb-4 text-center">
-                  {productionUrl ? `${productionUrl.replace(/\/+$/, '')}/request` : `${window.location.origin}/request`}
+                  {getEffectiveRequestUrl()}
                 </div>
                 
                 <div className="flex gap-2 w-full">
