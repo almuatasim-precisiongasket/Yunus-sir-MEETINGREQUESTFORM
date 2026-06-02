@@ -99,8 +99,9 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
+    const state = params.get('state');
     
-    if (code && window.location.search.includes('settings=true')) {
+    if (code && (window.location.search.includes('settings=true') || state === 'settings=true')) {
       const exchangeCode = async () => {
         setLinkStatus('exchanging');
         try {
@@ -110,7 +111,7 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
             throw new Error('OAuth Client ID and Client Secret not found in database.');
           }
 
-          const redirectUri = window.location.origin + '/?settings=true';
+          const redirectUri = window.location.origin + '/';
           const creds = await exchangeCodeForRefreshToken(
             savedCreds.clientId,
             savedCreds.clientSecret,
@@ -201,7 +202,7 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
       });
 
       // 2. Redirect to Google Authorization consent screen requesting offline refresh token access
-      const redirectUri = window.location.origin + '/?settings=true';
+      const redirectUri = window.location.origin + '/';
       const scope = encodeURIComponent(
         'https://www.googleapis.com/auth/calendar.events ' +
         'https://www.googleapis.com/auth/calendar.readonly ' +
@@ -214,6 +215,7 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
         `response_type=code&` +
         `scope=${scope}&` +
         `access_type=offline&` +
+        `state=settings=true&` +
         `prompt=consent`;
 
       window.location.href = oauthUrl;
@@ -621,14 +623,14 @@ export default function Settings({ onLinkSuccess, onUnlink }: SettingsProps) {
 
             <div className="flex items-center gap-2 bg-white border border-[#E5E7EB] rounded-xl p-2.5 pl-3.5 justify-between">
               <code className="text-[10px] font-mono text-slate-700 break-all select-all font-black">
-                {window.location.origin}/?settings=true
+                {window.location.origin}/
               </code>
               <motion.button
                 type="button"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => {
-                  safeCopyText(`${window.location.origin}/?settings=true`);
+                  safeCopyText(`${window.location.origin}/`);
                   setCopiedRedirectUri(true);
                   setTimeout(() => setCopiedRedirectUri(false), 2500);
                 }}

@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { Download, Monitor, Smartphone, Sparkles, CheckCircle2, X, Share2, PlusSquare, MoreVertical } from 'lucide-react';
 import { hapticFeedback } from '../lib/haptics';
 import CompanyLogo from './CompanyLogo';
+import { GlowCard } from './ui/GlowCard';
 
 export default function PWAInstallCard() {
   const { isInstallable, installApp } = usePWAInstall();
@@ -47,7 +48,11 @@ export default function PWAInstallCard() {
 
   return (
     <>
-      <div className="bg-gradient-to-br from-[#0B1F33] to-[#0A1724] text-white rounded-xl border border-blue-500/20 p-5 space-y-4 shadow-[0_12px_30px_rgba(11,31,51,0.3)] relative overflow-hidden">
+      <GlowCard 
+        glowColor="rgba(0, 143, 213, 0.25)"
+        glowSize={250}
+        className="bg-gradient-to-br from-[#0B1F33] to-[#0A1724] text-white rounded-xl border border-blue-500/20 p-5 space-y-4 shadow-[0_12px_30px_rgba(11,31,51,0.3)]"
+      >
         {/* Subtle background gradient glow */}
         <div className="absolute top-0 right-0 w-24 h-24 bg-[#008FD5]/10 rounded-full blur-2xl pointer-events-none -z-10" />
         
@@ -97,7 +102,7 @@ export default function PWAInstallCard() {
             </motion.button>
           </div>
         )}
-      </div>
+      </GlowCard>
 
       {/* Guide Overlay Dialog Modal rendered via React Portal to prevent CSS squish */}
       {typeof document !== 'undefined' && createPortal(

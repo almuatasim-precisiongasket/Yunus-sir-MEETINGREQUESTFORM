@@ -83,8 +83,6 @@ export function CanvasText({
       );
     };
 
-    updateDimensions();
-
     const resizeObserver = new ResizeObserver(updateDimensions);
     resizeObserver.observe(textEl);
 

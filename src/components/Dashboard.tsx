@@ -70,31 +70,35 @@ export default function Dashboard({ requests, onUpdateStatus, onSeedDemoData, on
   const [isUrgencyDropdownOpen, setIsUrgencyDropdownOpen] = useState(false);
 
   // Daily Agenda State
-  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
-  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+  const [eventsState, setEventsState] = useState<any[]>([]);
+  const [syncedAgendaKey, setSyncedAgendaKey] = useState("");
+  const isLoadingEvents = googleToken && syncedAgendaKey !== `${googleToken}-${requests.length}`;
+  const upcomingEvents = googleToken ? eventsState : [];
 
   // Progressive list loading state (Priority 0 DOM virtualizer)
   const [visibleCount, setVisibleCount] = useState(20);
+  const [lastParams, setLastParams] = useState({ filter, searchQuery, sortBy });
 
   // Stably reset progressive count when search parameters or filters change
-  useEffect(() => {
+  if (lastParams.filter !== filter || lastParams.searchQuery !== searchQuery || lastParams.sortBy !== sortBy) {
+    setLastParams({ filter, searchQuery, sortBy });
     setVisibleCount(20);
-  }, [filter, searchQuery, sortBy]);
+  }
 
   // Fetch upcoming agenda events in real time
   useEffect(() => {
     if (googleToken) {
-      setIsLoadingEvents(true);
       import('../lib/googleCalendar').then(({ fetchUpcomingEvents }) => {
         fetchUpcomingEvents(googleToken)
           .then((events) => {
-            setUpcomingEvents(events);
+            setEventsState(events);
+            setSyncedAgendaKey(`${googleToken}-${requests.length}`);
           })
-          .catch((err) => console.error('Failed to load upcoming events:', err))
-          .finally(() => setIsLoadingEvents(false));
+          .catch((err) => {
+            console.error('Failed to load upcoming events:', err);
+            setSyncedAgendaKey(`${googleToken}-${requests.length}`);
+          });
       });
-    } else {
-      setUpcomingEvents([]);
     }
   }, [googleToken, requests]); // Re-fetch agenda when requests update (e.g. on approval)
 

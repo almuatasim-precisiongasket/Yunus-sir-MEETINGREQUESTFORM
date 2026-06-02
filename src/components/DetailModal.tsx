@@ -18,8 +18,10 @@ export default function DetailModal({ request, onClose, onUpdateStatus, onDelete
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState('');
-  const [existingEvent, setExistingEvent] = useState<any | null>(null);
-  const [loadingEvent, setLoadingEvent] = useState(false);
+  const [eventState, setEventState] = useState<any | null>(null);
+  const [syncedKey, setSyncedKey] = useState("");
+  const loadingEvent = googleToken && request.id && syncedKey !== `${googleToken}-${request.id}`;
+  const existingEvent = googleToken && request.id ? eventState : null;
 
   const [formTemplate, setFormTemplate] = useState<any | null>(null);
 
@@ -43,15 +45,15 @@ export default function DetailModal({ request, onClose, onUpdateStatus, onDelete
 
   useEffect(() => {
     if (googleToken && request.id) {
-      setLoadingEvent(true);
       findExistingCalendarEvent(googleToken, request.id)
         .then(event => {
-          setExistingEvent(event);
+          setEventState(event);
+          setSyncedKey(`${googleToken}-${request.id}`);
         })
-        .catch(err => console.error(err))
-        .finally(() => setLoadingEvent(false));
-    } else {
-      setExistingEvent(null);
+        .catch(err => {
+          console.error(err);
+          setSyncedKey(`${googleToken}-${request.id}`);
+        });
     }
   }, [googleToken, request.id]);
 
@@ -62,7 +64,7 @@ export default function DetailModal({ request, onClose, onUpdateStatus, onDelete
     try {
       const result = await syncToGoogleCalendar(googleToken, request);
       const event = await findExistingCalendarEvent(googleToken, request.id);
-      setExistingEvent(event);
+      setEventState(event);
       // Save calendar and meet links back to firestore/localStorage
       if (result && (result.htmlLink || result.hangoutLink)) {
         await updateRequestLinks(request.id, result.htmlLink || '', result.hangoutLink || '');

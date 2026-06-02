@@ -58,6 +58,13 @@ export const EncryptedText: React.FC<EncryptedTextProps> = ({
   const isInView = useInView(ref, { once: true });
 
   const [revealCount, setRevealCount] = useState<number>(0);
+  const [lastText, setLastText] = useState(text);
+
+  if (lastText !== text) {
+    setLastText(text);
+    setRevealCount(0);
+  }
+
   const animationFrameRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
   const lastFlipTimeRef = useRef<number>(0);
@@ -75,7 +82,6 @@ export const EncryptedText: React.FC<EncryptedTextProps> = ({
     scrambleCharsRef.current = initial.split("");
     startTimeRef.current = performance.now();
     lastFlipTimeRef.current = startTimeRef.current;
-    setRevealCount(0);
 
     let isCancelled = false;
 
@@ -134,7 +140,6 @@ export const EncryptedText: React.FC<EncryptedTextProps> = ({
       ref={ref}
       className={cn(className)}
       aria-label={text}
-      role="text"
     >
       {words.map((word, wordIdx) => {
         const wordChars = word.split("");

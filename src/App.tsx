@@ -64,6 +64,7 @@ export default function App() {
 
   const isPublicForm = path === '/request' || path === '/request/';
   const isRequestDetail = path.startsWith('/request/') && path !== '/request/';
+  const isAdminRequestDetail = isRequestDetail && window.location.search.includes('admin=true');
   const detailRequestId = isRequestDetail ? path.split('/request/')[1] : null;
   const [requests, setRequests] = useState<MeetingRequest[]>([]);
   const [copied, setCopied] = useState(false);
@@ -299,13 +300,14 @@ export default function App() {
 
         // 1. Gmail Alert Channel
         if (sysSettings.emailAlertsEnabled && sysSettings.adminEmail) {
-          const token = googleToken || await getOrRefreshGoogleToken();
+          const refreshedToken = await getOrRefreshGoogleToken();
+          const token = googleToken || refreshedToken;
+
           if (token) {
+            const baseUrl = sysSettings.productionUrl || window.location.origin;
             import('./lib/gmailAutoReply').then(({ sendAdminNotificationEmail }) => {
-              sendAdminNotificationEmail(token, sysSettings.adminEmail, req);
+              sendAdminNotificationEmail(token, sysSettings.adminEmail, req, baseUrl);
             });
-          } else {
-            console.warn("Could not dispatch administrative Gmail alert: Background OAuth token not authenticated.");
           }
         }
 
@@ -491,7 +493,7 @@ export default function App() {
     // ----------------------------------------------------
     // SECURE PASSCODE GATED ACCESS (Login Portal First)
     // ----------------------------------------------------
-    if (!isLoggedIn && !isPublicForm && !isRequestDetail) {
+    if (!isLoggedIn && (!isPublicForm && !isRequestDetail || isAdminRequestDetail)) {
       return (
         <>
           <PWAUpdater />
@@ -518,7 +520,7 @@ export default function App() {
           />
 
           {/* Dynamic Laser Light Streams Vector Background Beams */}
-          <BackgroundBeams className="absolute inset-0 z-0 pointer-events-none opacity-50" />
+          <BackgroundBeams className="absolute inset-0 z-0 pointer-events-none opacity-70" />
 
           <motion.div 
             initial="hidden"

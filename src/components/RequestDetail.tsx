@@ -32,7 +32,8 @@ interface RequestDetailProps {
 
 export default function RequestDetail({ requestId, onBackToRequest, onBackToDashboard, isAdmin = false }: RequestDetailProps) {
   const [request, setRequest] = useState<MeetingRequest | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadedRequestId, setLoadedRequestId] = useState("");
+  const loading = loadedRequestId !== requestId;
   const [copiedId, setCopiedId] = useState(false);
   const [copiedMeet, setCopiedMeet] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -47,15 +48,14 @@ export default function RequestDetail({ requestId, onBackToRequest, onBackToDash
   }, []);
 
   useEffect(() => {
-    setLoading(true);
     getRequest(requestId)
       .then(data => {
         setRequest(data);
-        setLoading(false);
+        setLoadedRequestId(requestId);
       })
       .catch(err => {
         console.error(err);
-        setLoading(false);
+        setLoadedRequestId(requestId);
       });
   }, [requestId]);
 
@@ -145,16 +145,20 @@ export default function RequestDetail({ requestId, onBackToRequest, onBackToDash
         <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-rose-100 shadow-sm">
           <AlertCircle size={32} />
         </div>
-        <h2 className="text-xl font-bold text-[#0B1F33] tracking-tight">Receipt Not Found</h2>
+        <h2 className="text-xl font-bold text-[#0B1F33] tracking-tight">
+          {isAdmin ? 'Request Not Found' : 'Receipt Not Found'}
+        </h2>
         <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-          The booking reference code does not match any current meeting in our records. Please verify the URL parameter or contact operations.
+          {isAdmin 
+            ? 'This meeting request may have been removed, archived, or declined by another administrator.' 
+            : 'The booking reference code does not match any current meeting in our records. Please verify the URL parameter or contact operations.'}
         </p>
         <button 
-          onClick={onBackToRequest}
+          onClick={isAdmin && onBackToDashboard ? onBackToDashboard : onBackToRequest}
           className="mt-6 inline-flex items-center gap-1.5 px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
         >
           <ArrowLeft size={14} />
-          <span>Intake Portal</span>
+          <span>{isAdmin ? 'Back to Dashboard' : 'Intake Portal'}</span>
         </button>
       </div>
     );
