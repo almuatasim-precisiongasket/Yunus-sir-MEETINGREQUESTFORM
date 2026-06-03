@@ -550,7 +550,10 @@ export default function PublicForm({ template, onSubmit }: PublicFormProps) {
           return (slotStart < bEnd && slotEnd > bStart);
         });
 
-        if (!isBusy) {
+        const nowInMs = Date.now();
+        const isPastSlot = slotStart.getTime() <= nowInMs + 15 * 60000;
+
+        if (!isBusy && !isPastSlot) {
           slots.push(timeString);
         }
       }
@@ -743,7 +746,32 @@ function parseDuration(durationStr: string): number {
   };
 
   const handleChange = (id: string, value: string) => {
-    setResponses(prev => ({ ...prev, [id]: value }));
+    setResponses(prev => {
+      const next = { ...prev, [id]: value };
+      
+      // Clean up progressive hidden input states on category changes
+      if (id === 'category') {
+        const isBusinessCat = value === 'Business' || value === 'Investment' || value === 'Legal';
+        if (!isBusinessCat) {
+          delete next.company;
+        }
+        
+        const showContext = isBusinessCat || String(next.purpose || '').trim().length > 0;
+        if (!showContext) {
+          delete next.context;
+        }
+      }
+      
+      if (id === 'purpose') {
+        const isBusinessCat = String(next.category || '') === 'Business' || String(next.category || '') === 'Investment' || String(next.category || '') === 'Legal';
+        const showContext = isBusinessCat || String(value || '').trim().length > 0;
+        if (!showContext) {
+          delete next.context;
+        }
+      }
+      
+      return next;
+    });
   };
 
   const renderField = (field: FormField) => {

@@ -35,6 +35,7 @@ export default function FormManager() {
       setForms([...forms, newForm]);
     } catch (err) {
       console.error(err);
+      alert('Failed to duplicate form. Please check your network connection.');
     }
   };
 
@@ -48,6 +49,7 @@ export default function FormManager() {
       setForms(forms.filter(f => f.id !== id));
     } catch (err) {
       console.error(err);
+      alert('Failed to delete form. Please check your network connection.');
     }
   };
 
@@ -73,6 +75,7 @@ export default function FormManager() {
       setEditingFormId(newForm.id);
     } catch (err) {
       console.error(err);
+      alert('Failed to create new form. Please check your network connection.');
     }
   };
 
@@ -83,6 +86,7 @@ export default function FormManager() {
       setEditingFormId(null);
     } catch (err) {
       console.error(err);
+      alert('Failed to save changes. Please check your network connection.');
     }
   };
 

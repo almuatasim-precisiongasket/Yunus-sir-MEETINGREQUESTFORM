@@ -245,11 +245,20 @@ export default function WhatsAppDispatch() {
   // Direct Outbound Dispatch using wa.me URI exchange
   const handleWhatsAppSend = () => {
     const text = getPreviewText();
-    const phoneDigits = recipientPhone.replace(/[^\d]/g, '');
+    let phoneDigits = recipientPhone.replace(/[^\d]/g, '');
     
     if (!phoneDigits) {
       alert("Please provide a recipient phone number first.");
       return;
+    }
+    
+    // Normalize leading zero formatting and enforce country code (E.164)
+    if (phoneDigits.startsWith('9660')) {
+      phoneDigits = '966' + phoneDigits.substring(4);
+    } else if (phoneDigits.startsWith('0')) {
+      phoneDigits = '966' + phoneDigits.substring(1);
+    } else if (!phoneDigits.startsWith('966') && phoneDigits.length <= 10) {
+      phoneDigits = '966' + phoneDigits;
     }
     
     const encodedText = encodeURIComponent(text);

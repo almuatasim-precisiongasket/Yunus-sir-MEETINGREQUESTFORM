@@ -107,7 +107,7 @@ export default function RequestDetail({ requestId, onBackToRequest, onBackToDash
   const countdownText = useMemo(() => {
     if (!dateValue || !timeValue || request?.status !== 'Approved') return null;
     try {
-      const targetDate = new Date(`${dateValue}T${timeValue}:00`);
+      const targetDate = new Date(`${dateValue}T${timeValue}:00+03:00`);
       const now = new Date();
       const diffTime = targetDate.getTime() - now.getTime();
       
